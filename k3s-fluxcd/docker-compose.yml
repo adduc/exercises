@@ -1,0 +1,23 @@
+services:
+  server:
+    image: rancher/k3s:v1.32.1-k3s1
+    tmpfs: [ /run, /var/run ]
+    ulimits: { nproc: 65535, nofile: { soft: 65535, hard: 65535 } }
+    privileged: true
+    restart: unless-stopped
+    volumes:
+    - ./data/k3s-server:/var/lib/rancher/k3s
+    - .:/output
+    ports:
+    - 6443:6443  # Kubernetes API Server
+    - 80:30080   # Nginx Gateway Fabric
+    command:
+    - server
+    - --disable=metrics-server
+    - --disable=traefik
+    - --disable=servicelb
+    - --node-name=example
+    environment:
+    - K3S_TOKEN=example
+    - K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml
+    - K3S_KUBECONFIG_MODE=666
