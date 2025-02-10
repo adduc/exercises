@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Hello World",
+  "version": "1.0",
+  "description": "Displays 'Hello World' on example.com",
+  
+  "content_scripts": [
+    {
+      "matches": ["*://*.example.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
