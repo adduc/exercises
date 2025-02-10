@@ -1,8 +1,8 @@
-# Browser Extension: Example.com Background Changer
+# Browser Extension: Hello World
 
 ## Description
 
-This is a simple browser extension that changes the background color of example.com pages.
+This is a simple browser extension that displays "Hello World" on example.com pages.
 
 ## Installation
 
