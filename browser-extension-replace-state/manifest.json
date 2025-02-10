@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "URL State Replacer",
+    "version": "1.0",
+    "description": "Replaces the URL state with a new state on blur and visibilitychange for example.com pages.",
+    "content_scripts": [
+        {
+            "matches": [
+                "*://*.example.com/*"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}
