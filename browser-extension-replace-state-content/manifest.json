@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "History State Replacer",
+    "version": "1.0",
+    "description": "Replaces the history state on blur and visibilitychange for example.com pages.",
+    "content_scripts": [
+        {
+            "matches": [
+                "*://*.example.com/*"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}
