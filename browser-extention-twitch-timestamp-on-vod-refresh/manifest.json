@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Twitch Timestamp on VOD refresh",
+  "version": "1.0",
+  "description": "Appends the timestamp of the current Twitch VOD to the page when it is refreshed",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.twitch.tv/videos/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "permissions": [
+    "webNavigation"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": [
+      "background.js"
+    ]
+  }
+}
