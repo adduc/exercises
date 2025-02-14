@@ -1,0 +1,6 @@
+# Environment configuration
+.env
+
+# Example files used to test the script
+example.txt
+example.txt.enc
