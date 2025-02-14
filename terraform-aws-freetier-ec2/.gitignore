@@ -1,0 +1,13 @@
+# Terraform cache
+.terraform
+
+# Terraform state
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
+
+# Terraform lock file (for provider versions)
+.terraform.lock.hcl
+
+# Environment configuration
+terraform.tfvars
