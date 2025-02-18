@@ -21,9 +21,12 @@ import (
 )
 
 type User struct {
-	gorm.Model
-	Username string `gorm:"unique"`
-	Password string
+	ID        uint   `gorm:"primarykey"`
+	Username  string `gorm:"unique"`
+	Password  string `json:"-"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type Session struct {
@@ -92,11 +95,6 @@ func main() {
 		c.HTML(200, "index.tmpl", gin.H{})
 	})
 
-	// Dummy route
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "pong"})
-	})
-
 	// Register route
 	r.GET("/register", func(c *gin.Context) {
 		c.HTML(200, "register.tmpl", gin.H{})
@@ -119,7 +117,7 @@ func main() {
 		var user User
 		if dbc := db.Where("username = ?", username).Limit(1).Find(&user); dbc.Error != nil {
 			log.Println(dbc.Error)
-			c.JSON(500, gin.H{"message": "internal server error"})
+			c.HTML(500, "register.tmpl", gin.H{"error": "internal server error"})
 			return
 		}
 
@@ -132,7 +130,7 @@ func main() {
 		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
 			log.Println(err)
-			c.JSON(500, gin.H{"message": "internal server error"})
+			c.HTML(500, "register.tmpl", gin.H{"error": "internal server error"})
 			return
 		}
 
@@ -140,13 +138,82 @@ func main() {
 
 		if dbc := db.Create(&newUser); dbc.Error != nil {
 			log.Println(dbc.Error)
-			c.JSON(500, gin.H{"message": "internal server error"})
+			c.HTML(500, "register.tmpl", gin.H{"error": "internal server error"})
 			return
 		}
 
 		authenticate(db, c, newUser)
 
-		c.JSON(200, gin.H{"message": "registration successful", "user": username})
+		c.Redirect(302, "/me")
+	})
+
+	r.GET("/login", func(c *gin.Context) {
+		c.HTML(200, "login.tmpl", gin.H{})
+	})
+
+	r.POST("/login", func(c *gin.Context) {
+		// handle login form submission
+		username := c.PostForm("username")
+		password := c.PostForm("password")
+
+		// check if user exists
+		var user User
+		if dbc := db.Where("username = ?", username).Limit(1).Find(&user); dbc.Error != nil {
+			log.Println(dbc.Error)
+			c.HTML(500, "login.tmpl", gin.H{"error": "internal server error"})
+			return
+		}
+
+		if user.ID == 0 {
+			c.HTML(400, "login.tmpl", gin.H{"error": "username or password is incorrect"})
+			return
+		}
+
+		// check password
+		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+			c.HTML(400, "login.tmpl", gin.H{"error": "username or password is incorrect"})
+			return
+		}
+
+		authenticate(db, c, user)
+
+		c.Redirect(302, "/me")
+	})
+
+	authRoutes := r.Group("/", func(c *gin.Context) {
+		// check if user is authenticated
+		cookie, err := c.Cookie("session_id")
+		if err != nil {
+			c.HTML(401, "unauthorized.tmpl", gin.H{})
+			c.Abort()
+			return
+		}
+		var session Session
+		if dbc := db.Where("session_id = ?", cookie).First(&session); dbc.Error != nil {
+			log.Println(dbc.Error)
+			c.JSON(500, gin.H{"message": "internal server error"})
+			c.Abort()
+			return
+		}
+
+		if session.ID == 0 {
+			c.HTML(401, "unauthorized.tmpl", gin.H{})
+			c.Abort()
+			return
+		}
+		var user User
+		if dbc := db.Where("id = ?", session.UserID).First(&user); dbc.Error != nil {
+			log.Println(dbc.Error)
+			c.JSON(500, gin.H{"message": "internal server error"})
+			c.Abort()
+			return
+		}
+		c.Set("user", user)
+	})
+
+	authRoutes.GET("/me", func(c *gin.Context) {
+		user := c.MustGet("user").(User)
+		c.JSON(200, gin.H{"user": user})
 	})
 
 	r.Run()
