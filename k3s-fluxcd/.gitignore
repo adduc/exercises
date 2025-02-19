@@ -9,6 +9,7 @@ kubeconfig.yaml
 
 # Terraform state
 terraform.tfstate
+terraform.tfstate.*.backup
 terraform.tfstate.backup
 .terraform.lock.hcl
 
