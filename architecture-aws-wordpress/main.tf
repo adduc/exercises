@@ -5,15 +5,8 @@
 #   Cloudfront -> ALB -> ECS (EC2) -> RDS (MariaDB)
 #
 # Work Needed:
-# - [x] VPC (module)
-# - [x] RDS (module)
-# - [x] ALB (module)
-# - [x] Cloudfront (module)
-# - [ ] ECS (module-ish)
-# - [ ] S3 Backend
+# - [ ] S3 Terraform Backend
 # - [ ] EFS or EBS
-#
-# - [ ] lock down ALB using cloudfront prefix list
 ##
 
 provider "aws" {
@@ -97,8 +90,6 @@ module "db" {
 module "cloudfront" {
   source = "terraform-aws-modules/cloudfront/aws"
 
-
-
   origin = {
     alb_origin = {
       domain_name = module.lb.dns_name
@@ -115,10 +106,9 @@ module "cloudfront" {
     target_origin_id       = "alb_origin"
     viewer_protocol_policy = "redirect-to-https"
 
-    headers = ["Origin", "Host"]
-
-    # use_forwarded_values   = false
-    # cache_policy_id        = aws_cloudfront_cache_policy.cloudfront.id
+    headers      = ["Origin", "Host"]
+    cookies      = ["comment_*", "wordpress_*", "wp-settings-*"]
+    query_string = true
 
     allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"]
     cached_methods  = ["GET", "HEAD", "OPTIONS"]
@@ -133,24 +123,9 @@ module "cloudfront" {
   }
 }
 
-# resource "aws_cloudfront_cache_policy" "cloudfront" {
-#   name    = "free-tier"
-#   min_ttl = 0
-#   parameters_in_cache_key_and_forwarded_to_origin {
-#     cookies_config {
-#       cookie_behavior = "none"
-#     }
-#     headers_config {
-#       header_behavior = "whitelist"
-#       headers {
-#         items = ["Origin", "Host"]
-#       }
-#     }
-#     query_strings_config {
-#       query_string_behavior = "none"
-#     }
-#   }
-# }
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
 
 ##
 # ALB, Target Group, Listener, etc.
@@ -169,10 +144,10 @@ module "lb" {
   enable_deletion_protection = false
   security_group_ingress_rules = {
     all_http = {
-      from_port   = 80
-      to_port     = 80
-      ip_protocol = "tcp"
-      cidr_ipv4   = "0.0.0.0/0"
+      from_port      = 80
+      to_port        = 80
+      ip_protocol    = "tcp"
+      prefix_list_id = data.aws_ec2_managed_prefix_list.cloudfront.id
     }
   }
   security_group_egress_rules = {
@@ -194,10 +169,19 @@ module "lb" {
 
   target_groups = {
     ecs = {
-      backend_protocol  = "HTTP"
-      backend_port      = 8080
-      target_type       = "ip"
-      create_attachment = false
+      backend_protocol             = "HTTP"
+      backend_port                 = 8080
+      target_type                  = "ip"
+      create_attachment            = false
+      deregistration_delay_timeout = 15
+
+      health_check = {
+        path                = "/"
+        interval            = 30
+        timeout             = 10
+        healthy_threshold   = 3
+        unhealthy_threshold = 3
+      }
     }
   }
 }
@@ -311,14 +295,6 @@ resource "aws_vpc_security_group_egress_rule" "all_ipv6" {
   cidr_ipv6         = "::/0"
 }
 
-resource "aws_vpc_security_group_ingress_rule" "all_ssh" {
-  security_group_id = aws_security_group.autoscaling.id
-  ip_protocol       = "tcp"
-  from_port         = 22
-  to_port           = 22
-  cidr_ipv4         = "0.0.0.0/0"
-}
-
 ##
 # ECS Service
 ##
@@ -358,6 +334,7 @@ module "ecs_service" {
           protocol      = "tcp"
         }
       ]
+      # @see https://github.com/bitnami/containers/blob/main/bitnami/wordpress/README.md#environment-variables
       environment = [
         {
           name  = "WORDPRESS_DATABASE_HOST"
@@ -402,14 +379,6 @@ module "ecs_service" {
       to_port                  = 8080
       protocol                 = "tcp"
       source_security_group_id = module.lb.security_group_id
-    }
-
-    vpc_ingress = {
-      type        = "ingress"
-      from_port   = 8080
-      to_port     = 8080
-      protocol    = "tcp"
-      cidr_blocks = [module.vpc.vpc_cidr_block]
     }
 
     db_egress = {
