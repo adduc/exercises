@@ -5,12 +5,16 @@
 # - RDS and ALB support dualstack IPv6, but do not support IPv6-only.
 ##
 
+locals {
+  app = "cloudfront-vpc-origin"
+}
+
 provider "aws" {
   region = "us-east-2"
 
   default_tags {
     tags = {
-      app = "free-tier-ipv6"
+      app = local.app
     }
   }
 }
@@ -26,20 +30,15 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
 
-  name               = "ipv6-vpc"
-  enable_ipv6        = true
+  name               = local.app
   enable_nat_gateway = false
 
   azs  = slice(data.aws_availability_zones.available.names, 0, 3)
   cidr = "10.0.0.0/16"
 
-  public_subnets                                = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
-  public_subnet_ipv6_prefixes                   = [0, 1, 2]
-  public_subnet_assign_ipv6_address_on_creation = true
+  public_subnets = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
 
-  private_subnets                                = ["10.0.21.0/24", "10.0.22.0/24", "10.0.23.0/24"]
-  private_subnet_ipv6_prefixes                   = [3, 4, 5]
-  private_subnet_assign_ipv6_address_on_creation = true
+  private_subnets = ["10.0.21.0/24", "10.0.22.0/24", "10.0.23.0/24"]
 }
 
 ##
@@ -51,10 +50,8 @@ module "vpc" {
 module "cloudfront" {
   source = "terraform-aws-modules/cloudfront/aws"
 
-  is_ipv6_enabled = true
-
   origin = {
-    alb_origin = {
+    vpc_origin = {
       domain_name = module.lb.dns_name
       vpc_origin_config = {
         vpc_origin_id = aws_cloudfront_vpc_origin.vpc_origin.id
@@ -63,7 +60,7 @@ module "cloudfront" {
   }
 
   default_cache_behavior = {
-    target_origin_id       = "alb_origin"
+    target_origin_id       = "vpc_origin"
     viewer_protocol_policy = "redirect-to-https"
 
     allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"]
@@ -91,13 +88,15 @@ data "aws_ec2_managed_prefix_list" "cloudfront" {
 
 module "lb" {
   source                     = "terraform-aws-modules/alb/aws"
-  name                       = "free-tier"
+  name                       = local.app
   load_balancer_type         = "application"
   vpc_id                     = module.vpc.vpc_id
   subnets                    = module.vpc.private_subnets
-  ip_address_type            = "dualstack"
   enable_deletion_protection = false
-  internal                   = true
+
+  # Since we are using Cloudfront's VPC origin feature, the load
+  # balancer does not need to be internet-facing.
+  internal = true
 
   security_group_ingress_rules = {
     cloudfront_http = {
@@ -123,7 +122,7 @@ module "lb" {
 
 resource "aws_cloudfront_vpc_origin" "vpc_origin" {
   vpc_origin_endpoint_config {
-    name                   = "free-tier"
+    name                   = local.app
     arn                    = module.lb.arn
     http_port              = 80
     https_port             = 443
