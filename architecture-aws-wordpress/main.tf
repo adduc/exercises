@@ -326,6 +326,40 @@ resource "aws_vpc_security_group_egress_rule" "all_ipv6" {
 # ECS Service
 ##
 
+module "efs" {
+  source = "terraform-aws-modules/efs/aws"
+
+  name                 = local.app
+  enable_backup_policy = false
+  encrypted            = false
+
+  access_points = {
+    root = {
+      root_directory = {
+        path = "/"
+        creation_info = {
+          owner_uid   = 1001
+          owner_gid   = 1001
+          permissions = "750"
+        }
+      }
+    }
+  }
+
+  mount_targets = {
+    for az in data.aws_availability_zones.available.names : az => {
+      subnet_id = element(module.vpc.private_subnets, index(data.aws_availability_zones.available.names, az))
+    }
+  }
+
+  security_group_vpc_id = module.vpc.vpc_id
+  security_group_rules = {
+    vpc = {
+      source_security_group_id = module.ecs_service.security_group_id
+    }
+  }
+}
+
 data "aws_secretsmanager_secret_version" "db_password" {
   secret_id = module.db.db_instance_master_user_secret_arn
 }
@@ -389,8 +423,24 @@ module "ecs_service" {
           EOT
         }
       ]
+      mount_points = [
+        {
+          sourceVolume  = "wordpress"
+          containerPath = "/bitnami/wordpress"
+        }
+      ]
     }
   }
+
+  volume = [
+    {
+      name = "wordpress"
+      efs_volume_configuration = {
+        file_system_id     = module.efs.id
+        transit_encryption = "ENABLED"
+      }
+    }
+  ]
 
   load_balancer = {
     service = {
@@ -416,6 +466,14 @@ module "ecs_service" {
       to_port                  = 3306
       protocol                 = "tcp"
       source_security_group_id = aws_security_group.rds.id
+    }
+
+    efs_egress = {
+      type                     = "egress"
+      from_port                = 2049
+      to_port                  = 2049
+      protocol                 = "tcp"
+      source_security_group_id = module.efs.security_group_id
     }
   }
 }
