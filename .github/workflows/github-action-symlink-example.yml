@@ -1,0 +1,16 @@
+name: GitHub Action Symlink Example
+
+on:
+  push:
+    paths:
+      # Workflows for this exercise
+      - '.github/workflows/github-action-symlink-*'
+      # Files for this exercise
+      - 'github-action-symlink/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Hello, World!
+        run: echo "Hello, World!"
