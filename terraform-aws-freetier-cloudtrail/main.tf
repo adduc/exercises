@@ -74,10 +74,11 @@ data "aws_iam_policy_document" "bucket_policy" {
       variable = "aws:SourceArn"
       values = [
         format(
-          "arn:%s:cloudtrail:%s:%s:trail/freetier-org-cloudtrail",
+          "arn:%s:cloudtrail:%s:%s:trail/%s",
           data.aws_partition.current.partition,
           data.aws_region.current.name,
-          data.aws_organizations_organization.current.master_account_id
+          data.aws_organizations_organization.current.master_account_id,
+          local.app
         )
       ]
     }
@@ -111,10 +112,11 @@ data "aws_iam_policy_document" "bucket_policy" {
       variable = "aws:SourceArn"
       values = [
         format(
-          "arn:%s:cloudtrail:%s:%s:trail/freetier-org-cloudtrail",
+          "arn:%s:cloudtrail:%s:%s:trail/%s",
           data.aws_partition.current.partition,
           data.aws_region.current.name,
-          data.aws_organizations_organization.current.master_account_id
+          data.aws_organizations_organization.current.master_account_id,
+          local.app
         )
       ]
     }
@@ -145,10 +147,11 @@ data "aws_iam_policy_document" "bucket_policy" {
       variable = "aws:SourceArn"
       values = [
         format(
-          "arn:%s:cloudtrail:%s:%s:trail/freetier-org-cloudtrail",
+          "arn:%s:cloudtrail:%s:%s:trail/%s",
           data.aws_partition.current.partition,
           data.aws_region.current.name,
-          data.aws_organizations_organization.current.master_account_id
+          data.aws_organizations_organization.current.master_account_id,
+          local.app
         )
       ]
     }
