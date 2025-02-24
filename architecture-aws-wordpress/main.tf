@@ -4,9 +4,8 @@
 # Netflow:
 #   Cloudfront -> ALB -> ECS (EC2) -> RDS (MariaDB)
 #
-# Work Needed:
-# - [ ] S3 Terraform Backend
-# - [ ] EFS or EBS
+# Potential Improvements:
+# - S3 Terraform Backend
 ##
 
 provider "aws" {
