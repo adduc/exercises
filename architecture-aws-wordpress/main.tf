@@ -14,10 +14,16 @@ provider "aws" {
 
   default_tags {
     tags = {
-      app = "free-tier-wordpress"
+      app = local.app
     }
   }
 }
+
+locals {
+  app = "wordpress"
+}
+
+data "aws_availability_zones" "available" {}
 
 ##
 # VPC, subnets, internet gateway, route tables, etc.
@@ -28,22 +34,25 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
 
-  name = "free-tier"
+  name               = local.app
+  enable_nat_gateway = false
+
+  azs  = slice(data.aws_availability_zones.available.names, 0, 3)
   cidr = "10.0.0.0/16"
 
-  azs             = ["us-east-2a", "us-east-2b", "us-east-2c"]
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+  public_subnets   = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+  private_subnets  = ["10.0.21.0/24", "10.0.22.0/24", "10.0.23.0/24"]
+  database_subnets = ["10.0.31.0/24", "10.0.32.0/24", "10.0.33.0/24"]
 }
 
 ##
-# RDS, DB Subnet Group, Option Group, Parameter Group, etc.
+# RDS, Option Group, Parameter Group, etc.
 #
 # @see https://registry.terraform.io/modules/terraform-aws-modules/rds/aws/latest
 ##
 
 resource "aws_security_group" "rds" {
-  name        = "free-tier-rds-security-group"
+  name        = "${local.app}-rds"
   description = "Security group for free-tier RDS instance"
   vpc_id      = module.vpc.vpc_id
 }
@@ -51,8 +60,8 @@ resource "aws_security_group" "rds" {
 module "db" {
   source = "terraform-aws-modules/rds/aws"
 
-  identifier = "free-tier"
-  db_name    = "free_tier_db"
+  identifier = local.app
+  db_name    = local.app
 
   ## Engine
   engine               = "mariadb"
@@ -68,11 +77,11 @@ module "db" {
   storage_type      = "gp2"
 
   ## Authentication
-  username                            = "free_tier_admin"
+  username                            = "${local.app}_admin"
   iam_database_authentication_enabled = true
 
   ## Network
-  create_db_subnet_group = true
+  db_subnet_group_name   = module.vpc.database_subnet_group_name
   subnet_ids             = module.vpc.private_subnets
   vpc_security_group_ids = [aws_security_group.rds.id]
 
@@ -91,24 +100,23 @@ module "cloudfront" {
   source = "terraform-aws-modules/cloudfront/aws"
 
   origin = {
-    alb_origin = {
+    vpc_origin = {
       domain_name = module.lb.dns_name
-      custom_origin_config = {
-        http_port              = 80
-        https_port             = 443
-        origin_protocol_policy = "http-only"
-        origin_ssl_protocols   = ["TLSv1.2"]
+      vpc_origin_config = {
+        vpc_origin_id = aws_cloudfront_vpc_origin.vpc_origin.id
       }
     }
   }
 
   default_cache_behavior = {
-    target_origin_id       = "alb_origin"
+    target_origin_id       = "vpc_origin"
     viewer_protocol_policy = "redirect-to-https"
 
-    headers      = ["Origin", "Host"]
-    cookies      = ["comment_*", "wordpress_*", "wp-settings-*"]
-    query_string = true
+    compress                  = true
+    headers                   = ["Origin", "Host"]
+    cookies_forward           = "whitelist"
+    cookies_whitelisted_names = ["comment_*", "wordpress_*", "wp-settings-*"]
+    query_string              = true
 
     allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"]
     cached_methods  = ["GET", "HEAD", "OPTIONS"]
@@ -134,22 +142,26 @@ data "aws_ec2_managed_prefix_list" "cloudfront" {
 ##
 
 module "lb" {
-  source             = "terraform-aws-modules/alb/aws"
-  name               = "free-tier"
-  load_balancer_type = "application"
-
-  vpc_id  = module.vpc.vpc_id
-  subnets = module.vpc.public_subnets
-
+  source                     = "terraform-aws-modules/alb/aws"
+  name                       = local.app
+  load_balancer_type         = "application"
+  vpc_id                     = module.vpc.vpc_id
+  subnets                    = module.vpc.public_subnets
   enable_deletion_protection = false
+
+  # Since we are using Cloudfront's VPC origin feature, the load
+  # balancer does not need to be internet-facing.
+  internal = true
+
   security_group_ingress_rules = {
-    all_http = {
+    cloudfront_http = {
       from_port      = 80
       to_port        = 80
       ip_protocol    = "tcp"
       prefix_list_id = data.aws_ec2_managed_prefix_list.cloudfront.id
     }
   }
+
   security_group_egress_rules = {
     all = {
       ip_protocol = "-1"
@@ -186,6 +198,21 @@ module "lb" {
   }
 }
 
+resource "aws_cloudfront_vpc_origin" "vpc_origin" {
+  vpc_origin_endpoint_config {
+    name                   = local.app
+    arn                    = module.lb.arn
+    http_port              = 80
+    https_port             = 443
+    origin_protocol_policy = "http-only"
+
+    origin_ssl_protocols {
+      items    = ["TLSv1.2"]
+      quantity = 1
+    }
+  }
+}
+
 ##
 # ECS
 #
@@ -195,7 +222,7 @@ module "ecs" {
   source = "terraform-aws-modules/ecs/aws"
 
   # Cluster
-  cluster_name = "free-tier"
+  cluster_name = local.app
 
   cluster_settings = [
     {
@@ -226,7 +253,7 @@ data "aws_ssm_parameter" "ecs_ami" {
 module "autoscaling" {
   source = "terraform-aws-modules/autoscaling/aws"
 
-  name = "free-tier"
+  name = local.app
 
   min_size              = 0
   max_size              = 1
@@ -236,14 +263,14 @@ module "autoscaling" {
   protect_from_scale_in = true
 
   # Launch Template
-  launch_template_name   = "free-tier"
+  launch_template_name   = local.app
   update_default_version = true
   image_id               = data.aws_ssm_parameter.ecs_ami.value
   instance_type          = "t3.micro"
 
   # Launch Template's IAM
   create_iam_instance_profile = true
-  iam_role_name               = "ecs_instance"
+  iam_role_name               = "${local.app}-ecs-instance"
   iam_role_policies = {
     AmazonEC2ContainerServiceforEC2Role = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
     AmazonSSMManagedInstanceCore        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
@@ -279,7 +306,7 @@ module "autoscaling" {
 }
 
 resource "aws_security_group" "autoscaling" {
-  name   = "free-tier"
+  name   = "${local.app}-ecs-instance"
   vpc_id = module.vpc.vpc_id
 }
 
@@ -306,7 +333,7 @@ data "aws_secretsmanager_secret_version" "db_password" {
 module "ecs_service" {
   source = "terraform-aws-modules/ecs/aws//modules/service"
 
-  name                               = "free-tier"
+  name                               = local.app
   cluster_arn                        = module.ecs.cluster_arn
   requires_compatibilities           = ["EC2"]
   launch_type                        = "EC2"
@@ -314,8 +341,10 @@ module "ecs_service" {
   deployment_maximum_percent         = 100
   health_check_grace_period_seconds  = 180
 
-  cpu    = 128
-  memory = 128
+  autoscaling_policies = {}
+
+  cpu    = 256
+  memory = 256
 
   autoscaling_min_capacity = 1
   autoscaling_max_capacity = 1
@@ -323,8 +352,8 @@ module "ecs_service" {
 
   container_definitions = {
     wordpress = {
-      cpu                      = 128
-      memory                   = 128
+      cpu                      = 256
+      memory                   = 256
       essential                = true
       image                    = "public.ecr.aws/bitnami/wordpress:latest"
       readonly_root_filesystem = false
