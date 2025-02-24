@@ -39,9 +39,8 @@ type Session struct {
 //go:embed templates/*
 var f embed.FS
 
+// authenticate creates a session for the user and sets a cookie
 func authenticate(db *gorm.DB, c *gin.Context, user User) {
-	// create session, set cookie
-
 	// create random 64 character string, store in sessionID
 	sessionID := generateRandomString(64)
 
@@ -73,9 +72,7 @@ func generateRandomString(n int) string {
 }
 
 func main() {
-
 	// Initialize database
-
 	db, err := gorm.Open(sqlite.Open("users.sqlite"), &gorm.Config{})
 	if err != nil {
 		panic("Failed to connect to database")
@@ -85,12 +82,12 @@ func main() {
 	db.AutoMigrate(&User{}, &Session{})
 
 	// Initialize gin
-
 	r := gin.Default()
 
 	templ := template.Must(template.New("").ParseFS(f, "templates/*.tmpl"))
 	r.SetHTMLTemplate(templ)
 
+	// Index route
 	r.GET("/", func(c *gin.Context) {
 		c.HTML(200, "index.tmpl", gin.H{})
 	})

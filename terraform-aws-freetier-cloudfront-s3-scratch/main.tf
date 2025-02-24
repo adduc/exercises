@@ -1,4 +1,24 @@
-# Free Tier Cloudfront Distribution for S3 Bucket
+##
+# Exercise: Creating a free-tier-eligible Cloudfront Distribution backed
+# by an S3 Bucket
+##
+
+locals {
+  app          = "cloudfront-s3-scratch"
+  account_name = data.aws_organizations_organization.current.master_account_name
+}
+
+## Providers
+
+provider "aws" {
+  region = "us-east-2"
+
+  default_tags {
+    tags = {
+      app = local.app
+    }
+  }
+}
 
 ## Data Sources
 
@@ -9,10 +29,7 @@ data "aws_organizations_organization" "current" {}
 # S3 Bucket
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = format(
-    "%s-freetier-cloudfront-bucket",
-    data.aws_organizations_organization.current.master_account_name
-  )
+  bucket        = "${local.account_name}-${local.app}"
   force_destroy = true
 }
 
@@ -99,11 +116,11 @@ resource "aws_cloudfront_distribution" "distribution" {
 }
 
 resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
-  comment = "freetier-cloudfront"
+  comment = local.app
 }
 
 resource "aws_cloudfront_cache_policy" "cache_policy" {
-  name        = "freetier-cache-policy"
+  name        = local.app
   default_ttl = 24 * 60 * 60
   min_ttl     = 24 * 60 * 60
   max_ttl     = 24 * 60 * 60

@@ -1,3 +1,9 @@
+##
+# Exercise: creating a Github repository through Terraform
+##
+
+## Required Providers
+
 terraform {
   required_providers {
     github = {
@@ -7,16 +13,22 @@ terraform {
   }
 }
 
+## Providers
+
 # @see https://registry.terraform.io/providers/integrations/github/latest
 provider "github" {
   owner = var.owner
 }
+
+## Inputs
 
 variable "owner" {
   description = <<-EOT
     The owner of the repository. This can be a user or organization.
   EOT
 }
+
+## Resources
 
 resource "github_repository" "example" {
   name         = "example-terraform-managed-repo"

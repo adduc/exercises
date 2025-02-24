@@ -9,6 +9,8 @@ locals {
   app = "cloudfront-vpc-origin"
 }
 
+## Providers
+
 provider "aws" {
   region = "us-east-2"
 
@@ -18,6 +20,8 @@ provider "aws" {
     }
   }
 }
+
+## Data Sources
 
 data "aws_availability_zones" "available" {}
 

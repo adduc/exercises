@@ -1,3 +1,17 @@
+##
+# Exercise: Creating a free-tier-ish ECS cluster
+#
+# Notes:
+# - Both the ALB and EC2 require public IPv4 addresses for functionality
+#   and would incur charges. This can be avoided by making the ALB
+#   internal and placing it behind a Cloudfront distribution (using a
+#   VPC origin to route traffic to the ALB).
+##
+
+locals {
+  app = "freetier-ecs"
+}
+
 ## Required Providers
 
 terraform {
@@ -13,27 +27,48 @@ terraform {
 
 provider "aws" {
   region = "us-east-2"
+
+  default_tags {
+    tags = {
+      app = local.app
+    }
+  }
 }
 
+## Data Sources
+
+data "aws_availability_zones" "available" {}
+
 ## Resources
+
+##
+# VPC, subnets, internet gateway, route tables, etc.
+#
 # @see https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest
+##
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
 
-  name = "free-tier-rds"
+  name = local.app
   cidr = "10.0.0.0/16"
 
-  azs             = ["us-east-2a", "us-east-2b", "us-east-2c"]
+  azs             = slice(data.aws_availability_zones.available.names, 0, 3)
   private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
   public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
 }
+
+##
+# ECS Cluster, EC2 Capacity Provider, Autoscaling Group, etc.
+#
+# @see https://registry.terraform.io/modules/terraform-aws-modules/ecs/aws/latest
+##
 
 module "ecs" {
   source = "terraform-aws-modules/ecs/aws"
 
   # Cluster
-  cluster_name = "free-tier"
+  cluster_name = local.app
 
   cluster_settings = [
     {
@@ -55,16 +90,21 @@ module "ecs" {
   }
 }
 
+##
+# Autoscaling Group, Launch Template, etc.
+#
+# @see https://registry.terraform.io/modules/terraform-aws-modules/autoscaling/aws/latest
+##
+
 # @see https://docs.aws.amazon.com/AmazonECS/latest/developerguide/retrieve-ecs-optimized_AMI.html
 data "aws_ssm_parameter" "ecs_ami" {
   name = "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id"
 }
 
-# @see https://github.com/terraform-aws-modules/terraform-aws-autoscaling
 module "autoscaling" {
   source = "terraform-aws-modules/autoscaling/aws"
 
-  name = "free-tier"
+  name = local.app
 
   min_size              = 0
   max_size              = 1
@@ -81,7 +121,7 @@ module "autoscaling" {
 
   # Launch Template's IAM
   create_iam_instance_profile = true
-  iam_role_name               = "ecs_instance"
+  iam_role_name               = "${local.app}-ecs-instance"
   iam_role_policies = {
     AmazonEC2ContainerServiceforEC2Role = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
     AmazonSSMManagedInstanceCore        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
@@ -110,10 +150,14 @@ module "autoscaling" {
       systemctl enable --now amazon-ssm-agent
     EOF
   )
+
+  autoscaling_group_tags = {
+    AmazonECSManaged = true
+  }
 }
 
 resource "aws_security_group" "autoscaling" {
-  name   = "free-tier"
+  name   = "${local.app}-ecs-instance"
   vpc_id = module.vpc.vpc_id
 }
 
@@ -137,11 +181,16 @@ resource "aws_vpc_security_group_ingress_rule" "all_ssh" {
   cidr_ipv4         = "0.0.0.0/0"
 }
 
+##
+# ECS Service, Task Definition, etc.
+#
+# @see https://registry.terraform.io/modules/terraform-aws-modules/ecs/aws/latest/submodules/service
+##
 
 module "ecs_service" {
   source = "terraform-aws-modules/ecs/aws//modules/service"
 
-  name                     = "free-tier"
+  name                     = local.app
   cluster_arn              = module.ecs.cluster_arn
   requires_compatibilities = ["EC2"]
   launch_type              = "EC2"
@@ -189,10 +238,15 @@ module "ecs_service" {
   }
 }
 
-# @see https://github.com/terraform-aws-modules/terraform-aws-alb
+##
+# Load Balancer, Target Group, etc.
+#
+# @see https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/latest
+##
+
 module "lb" {
   source             = "terraform-aws-modules/alb/aws"
-  name               = "free-tier"
+  name               = local.app
   load_balancer_type = "application"
 
   vpc_id  = module.vpc.vpc_id
@@ -233,6 +287,8 @@ module "lb" {
     }
   }
 }
+
+## Outputs
 
 output "lb_dns_name" {
   value = module.lb.dns_name
