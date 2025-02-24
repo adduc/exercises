@@ -1,3 +1,11 @@
+##
+# Exercise: Free-tier-eligible RDS instance (MariaDB)
+##
+
+locals {
+  app = "freetier-rds-mariadb"
+}
+
 ## Required Providers
 
 terraform {
@@ -13,26 +21,46 @@ terraform {
 
 provider "aws" {
   region = "us-east-2"
+
+  default_tags {
+    tags = {
+      app = local.app
+    }
+  }
 }
 
-## Resources
+## Data Sources
+
+data "aws_availability_zones" "available" {}
+
+##
+# VPC, subnets, internet gateway, route tables, etc.
+#
 # @see https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest
+##
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
 
-  name = "free-tier-rds"
+  name               = local.app
+  enable_nat_gateway = false
+
+  azs  = slice(data.aws_availability_zones.available.names, 0, 3)
   cidr = "10.0.0.0/16"
 
-  azs             = ["us-east-2a", "us-east-2b", "us-east-2c"]
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+  public_subnets   = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+  private_subnets  = ["10.0.21.0/24", "10.0.22.0/24", "10.0.23.0/24"]
+  database_subnets = ["10.0.31.0/24", "10.0.32.0/24", "10.0.33.0/24"]
 }
 
+##
+# RDS, Option Group, Parameter Group, etc.
+#
 # @see https://registry.terraform.io/modules/terraform-aws-modules/rds/aws/latest
+##
 
 resource "aws_security_group" "rds" {
-  name        = "free-tier-rds-security-group"
+  name        = "${local.app}-rds"
   description = "Security group for free-tier RDS instance"
   vpc_id      = module.vpc.vpc_id
 }
@@ -40,7 +68,8 @@ resource "aws_security_group" "rds" {
 module "db" {
   source = "terraform-aws-modules/rds/aws"
 
-  identifier = "free-tier-rds"
+  identifier = local.app
+  db_name    = local.app
 
   ## Engine
   engine               = "mariadb"
@@ -56,11 +85,11 @@ module "db" {
   storage_type      = "gp2"
 
   ## Authentication
-  username                            = "free_tier_admin"
+  username                            = "${local.app}_admin"
   iam_database_authentication_enabled = true
 
   ## Network
-  create_db_subnet_group = true
+  db_subnet_group_name   = module.vpc.database_subnet_group_name
   subnet_ids             = module.vpc.private_subnets
   vpc_security_group_ids = [aws_security_group.rds.id]
 

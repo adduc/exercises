@@ -1,3 +1,11 @@
+##
+# Exercise: Creating a free-tier-eligible EC2 instance
+##
+
+locals {
+  app = "freetier-ec2"
+}
+
 ## Inputs
 
 variable "ssh_key_path" {
@@ -28,6 +36,18 @@ variable "allow_ssh_from_cidr" {
   EOF
 }
 
+## Providers
+
+provider "aws" {
+  region = "us-east-2"
+
+  default_tags {
+    tags = {
+      app = local.app
+    }
+  }
+}
+
 ## Resources
 
 # @see https://documentation.ubuntu.com/aws/en/latest/aws-how-to/instances/find-ubuntu-images/
@@ -40,7 +60,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
 
-  name = "free-tier-ec2-vpc"
+  name = local.app
   cidr = "10.0.0.0/16"
 
   azs             = ["us-east-2a", "us-east-2b", "us-east-2c"]
@@ -53,7 +73,7 @@ module "security_group" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.0"
 
-  name        = "free-tier-ec2-security-group"
+  name        = local.app
   description = "Security group for free-tier EC2 instance"
   vpc_id      = module.vpc.vpc_id
 
@@ -67,7 +87,7 @@ module "security_group" {
 }
 
 resource "aws_key_pair" "freetier_ec2_key" {
-  key_name   = "freetier_ec2_key"
+  key_name   = local.app
   public_key = file(var.ssh_key_path)
 }
 
@@ -83,6 +103,7 @@ resource "aws_instance" "freetier_ec2" {
 }
 
 ## Outputs
+
 output "ec2_public_ip" {
   value = aws_instance.freetier_ec2.public_ip
 }

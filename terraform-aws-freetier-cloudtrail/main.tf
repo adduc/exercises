@@ -1,10 +1,37 @@
+##
+# Creating a free-tier-eligible Cloudtrail to audit events across
+# all accounts in an AWS Organization
+##
+
+locals {
+  app          = "freetier-cloudtrail"
+  account_name = data.aws_organizations_organization.current.master_account_name
+}
+
+## Providers
+
+provider "aws" {
+  region = "us-east-2"
+
+  default_tags {
+    tags = {
+      app = local.app
+    }
+  }
+}
+
+## Data Sources
+
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 data "aws_region" "current" {}
 data "aws_organizations_organization" "current" {}
 
+##
+# Cloudtrail
+##
 resource "aws_cloudtrail" "org_cloudtrail" {
-  name                          = "freetier-org-cloudtrail"
+  name                          = local.app
   s3_bucket_name                = aws_s3_bucket.bucket.id
   cloud_watch_logs_group_arn    = "${aws_cloudwatch_log_group.log_group.arn}:*"
   cloud_watch_logs_role_arn     = aws_iam_role.cloud_watch_logs_role.arn
@@ -20,13 +47,12 @@ resource "aws_cloudtrail" "org_cloudtrail" {
   depends_on = [aws_s3_bucket_policy.bucket_policy]
 }
 
-## Bucket
+##
+# S3 Bucket
+##
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = format(
-    "%s-freetier-org-cloudtrail-bucket",
-    data.aws_organizations_organization.current.master_account_name
-  )
+  bucket        = "${local.account_name}-${local.app}"
   force_destroy = true
 }
 
@@ -137,7 +163,7 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
 ## CloudWatch Logs
 
 resource "aws_cloudwatch_log_group" "log_group" {
-  name = "freetier-org-cloudtrail-log-group"
+  name = local.app
 }
 
 data "aws_iam_policy_document" "cloud_watch_logs_role_assume" {
@@ -182,7 +208,7 @@ data "aws_iam_policy_document" "cloud_watch_logs_role_policy" {
 }
 
 resource "aws_iam_role" "cloud_watch_logs_role" {
-  name               = "freetier-org-cloudtrail-cloud-watch-logs-role"
+  name               = "${local.app}-cloudwatch-logs"
   assume_role_policy = data.aws_iam_policy_document.cloud_watch_logs_role_assume.json
   inline_policy {
     name   = "cloud_watch_logs_role_policy"

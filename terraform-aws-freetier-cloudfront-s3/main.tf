@@ -1,4 +1,12 @@
-# Free-Tier Cloudfront Distribution for S3 Bucket
+##
+# Exercise: Creating a free-tier-eligible Cloudfront Distribution backed
+# by an S3 Bucket
+##
+
+locals {
+  app          = "cloudfront-s3"
+  account_name = data.aws_organizations_organization.current.master_account_name
+}
 
 ## Providers
 
@@ -7,7 +15,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      app = "free-tier-cloudfront-s3"
+      app = local.app
     }
   }
 }
@@ -62,10 +70,7 @@ module "cloudfront" {
 module "s3_bucket" {
   source = "terraform-aws-modules/s3-bucket/aws"
 
-  bucket = format(
-    "%s-free-tier-cloudfront-s3",
-    data.aws_organizations_organization.current.master_account_name
-  )
+  bucket = "${local.account_name}-${local.app}"
 
   block_public_acls       = true
   block_public_policy     = true
