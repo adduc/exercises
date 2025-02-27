@@ -1,13 +1,18 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+)
 
-var db gorm.DB
+var db *gorm.DB
 
-func Init() error {
-	// @todo Initialize database connection here
-	return nil
+func Init() (err error) {
+	db, err = gorm.Open(sqlite.Open("db.sqlite"), &gorm.Config{})
+
+	return err
 }
-func GetDB() gorm.DB {
+
+func GetDB() *gorm.DB {
 	return db
 }
