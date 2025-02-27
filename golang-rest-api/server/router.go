@@ -11,5 +11,8 @@ func NewRouter() *gin.Engine {
 	health := &controllers.HealthController{}
 	router.GET("/health", health.HealthCheck)
 
+	user := &controllers.UserController{}
+	router.GET("/users", user.List)
+
 	return router
 }

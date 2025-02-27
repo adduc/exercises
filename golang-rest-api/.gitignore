@@ -1,0 +1,5 @@
+# Environment configuration
+.env
+
+# SQLite database
+db.sqlite
