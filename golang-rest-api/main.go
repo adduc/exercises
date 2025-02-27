@@ -5,8 +5,8 @@ import (
 
 	"github.com/adduc/exercises/golang-rest-api/config"
 	"github.com/adduc/exercises/golang-rest-api/db"
+	server "github.com/adduc/exercises/golang-rest-api/http"
 	"github.com/adduc/exercises/golang-rest-api/models"
-	"github.com/adduc/exercises/golang-rest-api/server"
 )
 
 func main() {
