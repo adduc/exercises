@@ -16,9 +16,9 @@ func main() {
 	if err := db.Init(); err != nil {
 		log.Panicln("Could not connect to database", err)
 	}
-
-	// Migrate the schema
-	db.GetDB().AutoMigrate(&models.User{})
+	if err := models.Init(); err != nil {
+		log.Panicln("Could not initialize models", err)
+	}
 
 	server.Init()
 }
