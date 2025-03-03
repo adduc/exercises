@@ -3,7 +3,7 @@ package repositories
 import (
 	"log"
 
-	"github.com/adduc/exercises/golang-rest-api/db"
+	"github.com/adduc/exercises/golang-rest-api/data"
 	"github.com/adduc/exercises/golang-rest-api/errors"
 	"github.com/adduc/exercises/golang-rest-api/models"
 )
@@ -13,12 +13,12 @@ type UserRepository struct {
 
 func (u *UserRepository) List() ([]models.User, error) {
 	var users []models.User
-	result := db.GetDB().Find(&users)
+	result := data.GetDB().Find(&users)
 	return users, result.Error
 }
 
 func (u *UserRepository) Create(user *models.User) error {
-	var conn = db.GetDB()
+	var conn = data.GetDB()
 
 	var existingUser models.User
 

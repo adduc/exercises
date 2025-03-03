@@ -1,4 +1,4 @@
-package server
+package http
 
 import "github.com/adduc/exercises/golang-rest-api/config"
 
