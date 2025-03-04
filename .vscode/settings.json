@@ -1,0 +1,17 @@
+// This is my opinionated settings file for working with this repository
+// in VSCode. While I generally prefer to keep settings on a per-user
+// basis, occasionally I find it useful to define per-repository settings.
+{
+    "files.exclude": {
+        // Terraform state files
+        //
+        // Normally, we would want to be aware of when these files are
+        // created (as it indicates that state is not being managed by a
+        // remote backend), but since this repository exclusively
+        // contains disposable examples, we can safely exclude them.
+        "**/terraform.tfstate": true,
+        "**/terraform.tfstate.backup": true,
+        "**/terraform.tfstate.*.backup": true,
+        "**/.terraform.tfstate.lock.info": true,
+    },
+}
