@@ -4,6 +4,7 @@ import (
 	"html/template"
 
 	"github.com/adduc/exercises/golang-bookmark-db/http/controllers"
+	"github.com/adduc/exercises/golang-bookmark-db/http/middlewares"
 	"github.com/adduc/exercises/golang-bookmark-db/http/resources"
 	"github.com/gin-gonic/gin"
 )
@@ -23,6 +24,14 @@ func NewRouter() *gin.Engine {
 	router.GET("/login", auth.Login)
 	router.POST("/login", auth.LoginPost)
 	router.GET("/logout", auth.Logout)
+
+	authMiddleware := &middlewares.AuthMiddleware{}
+	authGroup := router.Group("/", authMiddleware.RequireAuth)
+
+	bookmark := &controllers.BookmarkController{}
+	authGroup.GET("/bookmarks", bookmark.Index)
+	authGroup.GET("/bookmarks/create", bookmark.Create)
+	authGroup.POST("/bookmarks/create", bookmark.CreatePost)
 
 	return router
 }
