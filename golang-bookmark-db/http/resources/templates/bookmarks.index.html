@@ -1,0 +1,20 @@
+<h1>Bookmarks for {{ .User.Username }}</h1>
+
+{{ if .Bookmarks }}
+<ul>
+    {{ range .Bookmarks }}
+    <li>
+        <a href="{{ .Url.Url }}">{{ .Url.Url }}</a>
+        {{ if .Note }}
+        <p>{{ .Note }}</p>
+        {{ end }}
+    </li>
+    {{ end }}
+</ul>
+{{ else }}
+<p>No bookmarks found.</p>
+{{ end }}
+
+<p>
+    <a href="/bookmarks/create">Create a new bookmark</a>
+</p>
