@@ -7,9 +7,12 @@ import (
 )
 
 type User struct {
-	ID       uint   `gorm:"primarykey"`
-	Username string `gorm:"unique"`
-	Password string
+	ID        uint   `gorm:"primarykey"`
+	Username  string `gorm:"unique"`
+	Password  string
+	CreatedAt time.Time
+
+	Sessions []Session `gorm:"foreignKey:UserID"`
 }
 
 func (u *User) SetPassword(password string) error {
@@ -33,4 +36,6 @@ type Session struct {
 	Token     string `gorm:"unique"`
 	ExpiresAt time.Time
 	CreatedAt time.Time
+
+	User User `gorm:"foreignKey:UserID"`
 }
