@@ -11,3 +11,9 @@ type UserNotFound struct{}
 func (e *UserNotFound) Error() string {
 	return "user not found"
 }
+
+type SessionNotFound struct{}
+
+func (e *SessionNotFound) Error() string {
+	return "session not found"
+}
