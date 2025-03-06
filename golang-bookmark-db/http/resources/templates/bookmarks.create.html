@@ -1,0 +1,19 @@
+<form method="post">
+    <h1>Create Bookmark</h1>
+
+    {{if .error}}
+        <div>{{.error}}</div>
+    {{end}}
+
+    <div>
+        <label for="url">URL</label>
+        <input type="text" name="url" required>
+    </div>
+
+    <div>
+        <label for="note">Note</label>
+        <textarea name="note"></textarea>
+    </div>
+
+    <input type="submit" value="Create Bookmark">
+</form>
