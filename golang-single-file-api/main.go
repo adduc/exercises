@@ -54,6 +54,9 @@ func newRouter() *gin.Engine {
 	RegisterLandingRoutes(e)
 	RegisterAuthRoutes(e)
 
+	g := e.Group("/", LoadSession, RequireSession)
+	RegisterLandingAuthzRoutes(g)
+
 	return e
 }
 
@@ -132,18 +135,53 @@ type Session struct {
 	ExpiresAt time.Time `gorm:"notNull"`
 }
 
+func NewSession(user *User) *Session {
+	return &Session{
+		UserID:    user.ID,
+		Token:     generateSessionToken(),
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 30),
+	}
+}
+
+func generateSessionToken() string {
+	// generate 128-bit random token to use as session token
+	// @see https://owasp.org/www-community/vulnerabilities/Insufficient_Session-ID_Length
+	token := make([]byte, 16)
+	rand.Read(token)
+	return base64.StdEncoding.EncodeToString(token)
+}
+
 // persistence
 
 var Repos struct {
-	User UserRepository
+	Session SessionRepository
+	User    UserRepository
 }
 
 func init() {
+	Repos.Session = &SessionDBRepository{db: DBs.Default}
 	Repos.User = &UserDBRepository{db: DBs.Default}
 }
 
-type UserRepository interface {
+type SessionRepository interface {
 	CreateSession(session *Session) error
+	GetSessionByToken(token string) (*Session, error)
+}
+
+type SessionDBRepository struct {
+	db gorm.DB
+}
+
+func (r *SessionDBRepository) CreateSession(session *Session) error {
+	return r.db.Create(session).Error
+}
+
+func (r *SessionDBRepository) GetSessionByToken(token string) (session *Session, _ error) {
+	result := r.db.Where("token = ?", token).Limit(1).Find(&session)
+	return handleSingleDBResult(session, result)
+}
+
+type UserRepository interface {
 	CreateUser(user *User) error
 	GetUserByID(id int) (*User, error)
 	GetUserByUsername(username string) (*User, error)
@@ -151,10 +189,6 @@ type UserRepository interface {
 
 type UserDBRepository struct {
 	db gorm.DB
-}
-
-func (r *UserDBRepository) CreateSession(session *Session) error {
-	return r.db.Create(session).Error
 }
 
 func (r *UserDBRepository) CreateUser(user *User) error {
@@ -183,36 +217,46 @@ func handleSingleDBResult[T any](entity *T, result *gorm.DB) (*T, error) {
 	return entity, nil
 }
 
-// session
+// middleware
 
-var SessionManager SessionManagerInterface
-
-func init() {
-	SessionManager = &SessionDBManager{db: DBs.Default}
-}
-
-type SessionManagerInterface interface {
-	CreateSession(user *User) (*Session, error)
-	// ValidateSession(token string) (*Session, error)
-	// InvalidateSession(token string) error
-}
-
-type SessionDBManager struct {
-	db gorm.DB
-}
-
-func (m *SessionDBManager) CreateSession(user *User) (*Session, error) {
-	session := &Session{
-		UserID:    user.ID,
-		Token:     generateSessionToken(),
-		ExpiresAt: time.Now().Add(time.Hour * 24 * 30),
+func LoadSession(c *gin.Context) {
+	sessionToken, err := c.Cookie("session_token")
+	if err != nil {
+		c.Next()
+		return
 	}
 
-	if err := m.db.Create(session).Error; err != nil {
-		return nil, err
+	session, err := Repos.Session.GetSessionByToken(sessionToken)
+
+	if err != nil {
+		c.AbortWithError(500, err)
+		return
 	}
 
-	return session, nil
+	if session == nil {
+		c.Next()
+		return
+	}
+
+	if session.ExpiresAt.Before(time.Now()) {
+		c.SetCookie("session_token", "", -1, "/", "", false, true)
+		c.Next()
+		return
+	}
+
+	// @todo check if session is due for renewal
+
+	c.Set("session", session)
+}
+
+func RequireSession(c *gin.Context) {
+	session, exists := c.Get("session")
+	if !exists || session == nil {
+		c.SetCookie("session_token", "", -1, "/", "", false, true)
+		c.Redirect(http.StatusFound, "/login")
+		c.Abort()
+		return
+	}
 }
 
 func WriteSessionCookie(c *gin.Context, session *Session) {
@@ -220,19 +264,13 @@ func WriteSessionCookie(c *gin.Context, session *Session) {
 	c.SetCookie("session_token", session.Token, expiresAt, "/", "", false, true)
 }
 
-func generateSessionToken() string {
-	// generate 128-bit random token to use as session token
-	// @see https://owasp.org/www-community/vulnerabilities/Insufficient_Session-ID_Length
-	token := make([]byte, 16)
-	rand.Read(token)
-	return base64.StdEncoding.EncodeToString(token)
-}
-
 // landing routes
 
 func RegisterLandingRoutes(e *gin.Engine) {
-	// Register routes for landing page
 	e.GET("/", Landing)
+}
+
+func RegisterLandingAuthzRoutes(e *gin.RouterGroup) {
 	e.GET("/dashboard", Dashboard)
 }
 
@@ -293,8 +331,9 @@ func RegisterPost(c *gin.Context) {
 		return
 	}
 
-	session, err := SessionManager.CreateSession(user)
-	if err != nil {
+	session := NewSession(user)
+
+	if err := Repos.Session.CreateSession(session); err != nil {
 		c.HTML(500, "register.html", gin.H{"error": "Failed to create session"})
 		return
 	}
@@ -328,8 +367,9 @@ func LoginPost(c *gin.Context) {
 		return
 	}
 
-	session, err := SessionManager.CreateSession(user)
-	if err != nil {
+	session := NewSession(user)
+
+	if err := Repos.Session.CreateSession(session); err != nil {
 		c.HTML(500, "register.html", gin.H{"error": "Failed to create session"})
 		return
 	}
