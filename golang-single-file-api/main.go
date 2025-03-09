@@ -56,6 +56,7 @@ func newRouter() *gin.Engine {
 
 	g := e.Group("/", LoadSession, RequireSession)
 	RegisterLandingAuthzRoutes(g)
+	RegisterAuthAuthzRoutes(g)
 
 	return e
 }
@@ -63,8 +64,9 @@ func newRouter() *gin.Engine {
 // configuration
 
 var Config struct {
-	AppName       string `env:"APP_NAME" envDefault:"SingleFileApp"`
-	ListenAddress string `env:"LISTEN_ADDRESS" envDefault:":8080"`
+	AppName           string `env:"APP_NAME" envDefault:"SingleFileApp"`
+	ListenAddress     string `env:"LISTEN_ADDRESS" envDefault:":8080"`
+	SessionCookieName string `env:"SESSION_COOKIE_NAME" envDefault:"session_token"`
 }
 
 func init() {
@@ -101,7 +103,11 @@ func NewPrimaryDB() (*gorm.DB, error) {
 }
 
 func MigratePrimaryDB() (*gorm.DB, error) {
-	return &DBs.Default, DBs.Default.AutoMigrate(&User{}, &Session{})
+	return &DBs.Default, DBs.Default.AutoMigrate(
+		&User{},
+		&Session{},
+		&Bookmark{},
+	)
 }
 
 // models
@@ -151,6 +157,12 @@ func generateSessionToken() string {
 	return base64.StdEncoding.EncodeToString(token)
 }
 
+type Bookmark struct {
+	ID     int    `gorm:"primaryKey"`
+	UserID int    `gorm:"uniqueIndex:user_url"`
+	Url    string `gorm:"uniqueIndex:user_url"`
+}
+
 // persistence
 
 var Repos struct {
@@ -165,6 +177,7 @@ func init() {
 
 type SessionRepository interface {
 	CreateSession(session *Session) error
+	DeleteSessionByToken(token string) (bool, error)
 	GetSessionByToken(token string) (*Session, error)
 }
 
@@ -174,6 +187,16 @@ type SessionDBRepository struct {
 
 func (r *SessionDBRepository) CreateSession(session *Session) error {
 	return r.db.Create(session).Error
+}
+
+func (r *SessionDBRepository) DeleteSessionByToken(token string) (bool, error) {
+	result := r.db.Where("token = ?", token).Delete(&Session{})
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return result.RowsAffected == 1, nil
 }
 
 func (r *SessionDBRepository) GetSessionByToken(token string) (session *Session, _ error) {
@@ -220,7 +243,8 @@ func handleSingleDBResult[T any](entity *T, result *gorm.DB) (*T, error) {
 // middleware
 
 func LoadSession(c *gin.Context) {
-	sessionToken, err := c.Cookie("session_token")
+	sessionToken, err := c.Cookie(Config.SessionCookieName)
+
 	if err != nil {
 		c.Next()
 		return
@@ -239,7 +263,7 @@ func LoadSession(c *gin.Context) {
 	}
 
 	if session.ExpiresAt.Before(time.Now()) {
-		c.SetCookie("session_token", "", -1, "/", "", false, true)
+		c.SetCookie(Config.SessionCookieName, "", -1, "/", "", false, true)
 		c.Next()
 		return
 	}
@@ -252,7 +276,7 @@ func LoadSession(c *gin.Context) {
 func RequireSession(c *gin.Context) {
 	session, exists := c.Get("session")
 	if !exists || session == nil {
-		c.SetCookie("session_token", "", -1, "/", "", false, true)
+		c.SetCookie(Config.SessionCookieName, "", -1, "/", "", false, true)
 		c.Redirect(http.StatusFound, "/login")
 		c.Abort()
 		return
@@ -261,7 +285,11 @@ func RequireSession(c *gin.Context) {
 
 func WriteSessionCookie(c *gin.Context, session *Session) {
 	expiresAt := int(time.Until(session.ExpiresAt).Seconds())
-	c.SetCookie("session_token", session.Token, expiresAt, "/", "", false, true)
+	c.SetCookie(Config.SessionCookieName, session.Token, expiresAt, "/", "", false, true)
+}
+
+func DeleteSessionCookie(c *gin.Context) {
+	c.SetCookie(Config.SessionCookieName, "", -1, "/", "", false, true)
 }
 
 // landing routes
@@ -290,6 +318,9 @@ func RegisterAuthRoutes(e *gin.Engine) {
 	e.POST("/register", RegisterPost)
 	e.GET("/login", Login)
 	e.POST("/login", LoginPost)
+}
+
+func RegisterAuthAuthzRoutes(e *gin.RouterGroup) {
 	e.GET("/logout", Logout)
 }
 
@@ -379,5 +410,9 @@ func LoginPost(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
-	// Handle logout
+	session, _ := c.Get("session")
+	Repos.Session.DeleteSessionByToken(session.(*Session).Token)
+	DeleteSessionCookie(c)
+
+	c.Redirect(http.StatusFound, "/")
 }
