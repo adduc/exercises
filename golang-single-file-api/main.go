@@ -527,9 +527,12 @@ func CreateBookmarkPost(c *gin.Context) {
 }
 
 func EditBookmark(c *gin.Context) {
-	id := c.Param("id")
+	id, ok := c.Params.Get("id")
+	if !ok {
+		c.String(http.StatusBadRequest, "Invalid bookmark ID")
+		return
+	}
 
-	// convert id to int
 	bookmarkID, err := strconv.Atoi(id)
 	if err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
@@ -560,9 +563,12 @@ type EditBookmarkInput struct {
 }
 
 func EditBookmarkPost(c *gin.Context) {
-	id := c.Param("id")
+	id, ok := c.Params.Get("id")
+	if !ok {
+		c.String(http.StatusBadRequest, "Invalid bookmark ID")
+		return
+	}
 
-	// convert id to int
 	bookmarkID, err := strconv.Atoi(id)
 	if err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
@@ -607,9 +613,12 @@ func EditBookmarkPost(c *gin.Context) {
 }
 
 func DeleteBookmark(c *gin.Context) {
-	id := c.Param("id")
+	id, ok := c.Params.Get("id")
+	if !ok {
+		c.String(http.StatusBadRequest, "Invalid bookmark ID")
+		return
+	}
 
-	// convert id to int
 	bookmarkID, err := strconv.Atoi(id)
 	if err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
@@ -635,9 +644,12 @@ func DeleteBookmark(c *gin.Context) {
 }
 
 func DeleteBookmarkPost(c *gin.Context) {
-	id := c.Param("id")
+	id, ok := c.Params.Get("id")
+	if !ok {
+		c.String(http.StatusBadRequest, "Invalid bookmark ID")
+		return
+	}
 
-	// convert id to int
 	bookmarkID, err := strconv.Atoi(id)
 	if err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
