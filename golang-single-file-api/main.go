@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/caarlos0/env/v8"
@@ -57,6 +58,7 @@ func newRouter() *gin.Engine {
 	g := e.Group("/", LoadSession, RequireSession)
 	RegisterLandingAuthzRoutes(g)
 	RegisterAuthAuthzRoutes(g)
+	RegisterBookmarkAuthzRoutes(g)
 
 	return e
 }
@@ -161,18 +163,33 @@ type Bookmark struct {
 	ID     int    `gorm:"primaryKey"`
 	UserID int    `gorm:"uniqueIndex:user_url"`
 	Url    string `gorm:"uniqueIndex:user_url"`
+	Note   string `gorm:"size:1024"`
 }
 
 // persistence
 
 var Repos struct {
-	Session SessionRepository
-	User    UserRepository
+	Bookmark BookmarkRepository
+	Session  SessionRepository
+	User     UserRepository
 }
 
 func init() {
+	Repos.Bookmark = &BookmarkDBRepository{db: DBs.Default}
 	Repos.Session = &SessionDBRepository{db: DBs.Default}
 	Repos.User = &UserDBRepository{db: DBs.Default}
+}
+
+func handleSingleDBResult[T any](entity *T, result *gorm.DB) (*T, error) {
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+
+	return entity, nil
 }
 
 type SessionRepository interface {
@@ -228,16 +245,46 @@ func (r *UserDBRepository) GetUserByUsername(username string) (user *User, _ err
 	return handleSingleDBResult(user, result)
 }
 
-func handleSingleDBResult[T any](entity *T, result *gorm.DB) (*T, error) {
+type BookmarkRepository interface {
+	CreateBookmark(bookmark *Bookmark) error
+	UpdateBookmark(bookmark *Bookmark) error
+	DeleteBookmarkByID(id int) (bool, error)
+	GetBookmarksByUserID(userID int) ([]*Bookmark, error)
+	GetBookmarkByID(id int) (*Bookmark, error)
+}
+
+type BookmarkDBRepository struct {
+	db gorm.DB
+}
+
+func (r *BookmarkDBRepository) CreateBookmark(bookmark *Bookmark) error {
+	return r.db.Create(bookmark).Error
+}
+
+func (r *BookmarkDBRepository) UpdateBookmark(bookmark *Bookmark) error {
+	return r.db.Save(bookmark).Error
+}
+
+func (r *BookmarkDBRepository) DeleteBookmarkByID(id int) (bool, error) {
+	result := r.db.Where("id = ?", id).Delete(&Bookmark{})
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected == 1, nil
+}
+
+func (r *BookmarkDBRepository) GetBookmarksByUserID(userID int) (bookmarks []*Bookmark, _ error) {
+	result := r.db.Where("user_id = ?", userID).Find(&bookmarks)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	if result.RowsAffected == 0 {
-		return nil, nil
-	}
+	return bookmarks, nil
+}
 
-	return entity, nil
+func (r *BookmarkDBRepository) GetBookmarkByID(id int) (bookmark *Bookmark, _ error) {
+	result := r.db.Where("id = ?", id).Limit(1).Find(&bookmark)
+	return handleSingleDBResult(bookmark, result)
 }
 
 // middleware
@@ -328,14 +375,14 @@ func Register(c *gin.Context) {
 	c.HTML(200, "register.html", gin.H{})
 }
 
-type RegisterFormInput struct {
+type RegisterForm struct {
 	Username        string `form:"username" binding:"required,min=3,max=24"`
 	Password        string `form:"password" binding:"required,min=8,max=128"`
 	ConfirmPassword string `form:"confirm_password" binding:"required,eqfield=Password"`
 }
 
 func RegisterPost(c *gin.Context) {
-	var input RegisterFormInput
+	var input RegisterForm
 	if err := c.ShouldBind(&input); err != nil {
 		c.HTML(400, "register.html", gin.H{"error": "Invalid input"})
 		return
@@ -377,13 +424,13 @@ func Login(c *gin.Context) {
 	c.HTML(200, "login.html", gin.H{})
 }
 
-type LoginFormInput struct {
+type LoginForm struct {
 	Username string `form:"username" binding:"required,min=3,max=24"`
 	Password string `form:"password" binding:"required,min=8,max=128"`
 }
 
 func LoginPost(c *gin.Context) {
-	var input LoginFormInput
+	var input LoginForm
 	if err := c.ShouldBind(&input); err != nil {
 		c.HTML(400, "login.html", gin.H{"error": "Invalid input"})
 		return
@@ -415,4 +462,208 @@ func Logout(c *gin.Context) {
 	DeleteSessionCookie(c)
 
 	c.Redirect(http.StatusFound, "/")
+}
+
+// bookmark routes
+
+func RegisterBookmarkAuthzRoutes(e *gin.RouterGroup) {
+	e.GET("/bookmarks", ListBookmarks)
+	e.GET("/bookmarks/create", CreateBookmark)
+	e.POST("/bookmarks/create", CreateBookmarkPost)
+	e.GET("/bookmarks/:id/edit", EditBookmark)
+	e.POST("/bookmarks/:id/edit", EditBookmarkPost)
+	e.GET("/bookmarks/:id/delete", DeleteBookmark)
+	e.POST("/bookmarks/:id/delete", DeleteBookmarkPost)
+}
+
+func ListBookmarks(c *gin.Context) {
+	session, _ := c.Get("session")
+	userID := session.(*Session).UserID
+
+	var bookmarks []*Bookmark
+
+	// @todo paginate bookmarks
+	bookmarks, err := Repos.Bookmark.GetBookmarksByUserID(userID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to fetch bookmarks")
+		return
+	}
+
+	c.HTML(200, "bookmarks.list.html", gin.H{
+		"bookmarks": bookmarks,
+	})
+}
+
+func CreateBookmark(c *gin.Context) {
+	c.HTML(200, "bookmarks.create.html", gin.H{})
+}
+
+type CreateBookmarkInput struct {
+	Url  string `form:"url" binding:"required,url"`
+	Note string `form:"note" binding:"max=1024"`
+}
+
+func CreateBookmarkPost(c *gin.Context) {
+	var input CreateBookmarkInput
+	if err := c.ShouldBind(&input); err != nil {
+		c.HTML(400, "bookmarks.create.html", gin.H{"error": "Invalid input"})
+		return
+	}
+
+	session, _ := c.Get("session")
+
+	bookmark := &Bookmark{
+		UserID: session.(*Session).UserID,
+		Url:    input.Url,
+		Note:   input.Note,
+	}
+
+	if err := Repos.Bookmark.CreateBookmark(bookmark); err != nil {
+		c.HTML(500, "bookmarks.create.html", gin.H{"error": "Failed to create bookmark"})
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/bookmarks")
+}
+
+func EditBookmark(c *gin.Context) {
+	id := c.Param("id")
+
+	// convert id to int
+	bookmarkID, err := strconv.Atoi(id)
+	if err != nil {
+		c.String(http.StatusBadRequest, "Invalid bookmark ID")
+		return
+	}
+
+	session, _ := c.Get("session")
+
+	bookmark, err := Repos.Bookmark.GetBookmarkByID(bookmarkID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
+		return
+	}
+
+	if bookmark == nil || bookmark.UserID != session.(*Session).UserID {
+		c.String(http.StatusNotFound, "Bookmark not found")
+		return
+	}
+
+	c.HTML(200, "bookmarks.edit.html", gin.H{
+		"bookmark": bookmark,
+	})
+}
+
+type EditBookmarkInput struct {
+	Url  string `form:"url" binding:"required,url"`
+	Note string `form:"note" binding:"max=1024"`
+}
+
+func EditBookmarkPost(c *gin.Context) {
+	id := c.Param("id")
+
+	// convert id to int
+	bookmarkID, err := strconv.Atoi(id)
+	if err != nil {
+		c.String(http.StatusBadRequest, "Invalid bookmark ID")
+		return
+	}
+
+	session, _ := c.Get("session")
+
+	bookmark, err := Repos.Bookmark.GetBookmarkByID(bookmarkID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
+		return
+	}
+
+	if bookmark == nil || bookmark.UserID != session.(*Session).UserID {
+		c.String(http.StatusNotFound, "Bookmark not found")
+		return
+	}
+
+	var input EditBookmarkInput
+
+	if err := c.ShouldBind(&input); err != nil {
+		c.HTML(400, "bookmarks.edit.html", gin.H{
+			"error":    "Invalid input",
+			"bookmark": bookmark,
+		})
+		return
+	}
+
+	bookmark.Url = input.Url
+	bookmark.Note = input.Note
+
+	if err := Repos.Bookmark.UpdateBookmark(bookmark); err != nil {
+		c.HTML(500, "bookmarks.edit.html", gin.H{
+			"error":    "Failed to update bookmark",
+			"bookmark": bookmark,
+		})
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/bookmarks")
+}
+
+func DeleteBookmark(c *gin.Context) {
+	id := c.Param("id")
+
+	// convert id to int
+	bookmarkID, err := strconv.Atoi(id)
+	if err != nil {
+		c.String(http.StatusBadRequest, "Invalid bookmark ID")
+		return
+	}
+
+	session, _ := c.Get("session")
+
+	bookmark, err := Repos.Bookmark.GetBookmarkByID(bookmarkID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
+		return
+	}
+
+	if bookmark == nil || bookmark.UserID != session.(*Session).UserID {
+		c.String(http.StatusNotFound, "Bookmark not found")
+		return
+	}
+
+	c.HTML(200, "bookmarks.delete.html", gin.H{
+		"bookmark": bookmark,
+	})
+}
+
+func DeleteBookmarkPost(c *gin.Context) {
+	id := c.Param("id")
+
+	// convert id to int
+	bookmarkID, err := strconv.Atoi(id)
+	if err != nil {
+		c.String(http.StatusBadRequest, "Invalid bookmark ID")
+		return
+	}
+
+	session, _ := c.Get("session")
+
+	bookmark, err := Repos.Bookmark.GetBookmarkByID(bookmarkID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
+		return
+	}
+
+	if bookmark == nil || bookmark.UserID != session.(*Session).UserID {
+		c.String(http.StatusNotFound, "Bookmark not found")
+		return
+	}
+
+	if _, err := Repos.Bookmark.DeleteBookmarkByID(bookmarkID); err != nil {
+		c.HTML(500, "bookmarks.delete.html", gin.H{
+			"error":    "Failed to delete bookmark",
+			"bookmark": bookmark,
+		})
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/bookmarks")
 }
