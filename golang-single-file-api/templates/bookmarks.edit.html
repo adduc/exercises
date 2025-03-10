@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
+    <title>Edit Bookmark | Single File Application</title>
+</head>
+<body>
+    <h1>Single File Application</h1>
+    <h2>Edit Bookmark</h2>
+    {{ if .error }}
+        <p style="color: red;">{{ .error }}</p>
+    {{ end }}
+    <form method="post">
+        <label for="url">URL:</label>
+        <input type="url" id="url" name="url" required value="{{ .bookmark.Url }}"><br><br>
+        <label for="note">Note:</label>
+        <textarea id="note" name="note">{{ .bookmark.Note }}</textarea><br><br>
+        <button type="submit">Edit Bookmark</button>
+    </form>
+</body>
+</html>
