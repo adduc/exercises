@@ -1,0 +1,17 @@
+# Terraform cache
+.terraform
+
+# Terraform state
+terraform.tfstate
+terraform.tfstate.*.backup
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
+
+# Terraform lock file (for provider versions)
+.terraform.lock.hcl
+
+# Placeholder payload for initial lambda creation
+empty.zip
+
+# Build artifact
+bash_lambda.zip
