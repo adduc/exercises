@@ -1,0 +1,53 @@
+#!/bin/bash
+
+preflight() {
+  set -o pipefail -o errexit -o nounset
+
+  HEADERS_FILE="$(mktemp)"
+}
+
+handler() {
+  echo "Event data: $EVENT_DATA"
+  echo "Headers: $(cat "$HEADERS_FILE")"
+  echo "Request ID: $REQUEST_ID"
+  echo "Runtime API: $AWS_LAMBDA_RUNTIME_API"
+
+  RESPONSE="SUCCESS FROM HANDLER :)"
+}
+
+wait_for_request() {
+  EVENT_DATA=$(\
+    curl --silent --fail-with-body --show-error --location --dump-header "$HEADERS_FILE" \
+    "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next" \
+  )
+}
+
+parse_request_id() {
+  REQUEST_ID=$(\
+    grep --fixed-strings --ignore-case Lambda-Runtime-Aws-Request-Id "$HEADERS_FILE" \
+    | tr --delete '[:space:]' \
+    | cut --delimiter=: --fields=2 \
+  )
+}
+
+send_response() {
+  curl --silent --fail-with-body --show-error \
+    --data "$RESPONSE" \
+    "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response"
+}
+
+loop() {
+  while true; do
+    wait_for_request
+    parse_request_id
+    handler
+    send_response
+  done
+}
+
+main() {
+  preflight "$@"
+  loop
+}
+
+main "$@"
