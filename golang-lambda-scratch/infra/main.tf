@@ -1,5 +1,5 @@
 locals {
-  app_name = "golang_lambda"
+  app_name = "golang_lambda_scratch"
 }
 
 provider "aws" {

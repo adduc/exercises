@@ -1,4 +1,4 @@
-LAMBDA_NAME := golang_lambda
+LAMBDA_NAME := golang_lambda_scratch
 
 .NOTPARALLEL:
 .PHONY: build archive upload wait deploy clean
