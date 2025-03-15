@@ -8,7 +8,7 @@ preflight() {
 
 handler() {
   echo "Event data: $EVENT_DATA"
-  echo "Headers: $HEADERS_FILE"
+  echo "Headers: $(cat "$HEADERS_FILE")"
   echo "Request ID: $REQUEST_ID"
   echo "Runtime API: $AWS_LAMBDA_RUNTIME_API"
 
@@ -17,7 +17,7 @@ handler() {
 
 wait_for_request() {
   EVENT_DATA=$(\
-    curl --silent --show-error --location --dump-header "$HEADERS_FILE" \
+    curl --silent --fail-with-body --show-error --location --dump-header "$HEADERS_FILE" \
     "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next" \
   )
 }
@@ -31,7 +31,7 @@ parse_request_id() {
 }
 
 send_response() {
-  curl --silent --show-error \
+  curl --silent --fail-with-body --show-error \
     --data "$RESPONSE" \
     "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response"
 }

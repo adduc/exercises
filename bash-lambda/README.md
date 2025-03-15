@@ -9,21 +9,24 @@ I am looking at creating Lambda functions for a few projects, and I wanted to be
 - Terraform
 - AWS CLI
 
-## Setup
+## Infrastructure Setup
 
-The Terraform code in this exercise creates a Lambda function that is triggered by an S3 event. The Lambda function is written in Bash and is designed to handle the event by printing the event details to the console.
+The Terraform code in this exercise creates a Lambda function and related resources.
 
-To provision the lambda function and related resources, run the following commands:
+To set up the infrastructure, run the following commands:
 
 ```sh
-
+cd infra
 terraform init
 terraform apply
 ```
 
 ## Deploying the Lambda Function
 
-A Makefile is provided to help with the deployment process. The Makefile includes a target to build the Lambda function, archive it, and update the Lambda function code in AWS.
+A Makefile is provided to help with the deployment process. The Makefile
+includes a target to build the Lambda function, create an archive, and
+update the Lambda function code in AWS.
+
 To deploy the Lambda function, run:
 
 ```sh
@@ -39,3 +42,7 @@ make invoke
 ```
 
 This will invoke the Lambda function with a sample event and print the output to the console.
+
+## Lessons Learned
+
+Bash takes around ~40-50ms to cold start, which is faster than most other languages. However, it is slower to serve requests, averaging around ~200ms per request. It is not a good choice when speed is a concern.
