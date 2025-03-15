@@ -33,7 +33,7 @@ variable "owner" {
 resource "github_repository" "example" {
   name         = "example-terraform-managed-repo"
   description  = "An example repository managed by the Github Terraform provider"
-  private      = false
+  visibility   = "public"
   has_issues   = true
   has_projects = true
   has_wiki     = false
