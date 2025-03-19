@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Bookmark extends DynamoDbModel
 {
-    protected $table = 'Bookmarks';
+    protected $table = 'bookmarks';
 
     protected $guarded = [];
 }
