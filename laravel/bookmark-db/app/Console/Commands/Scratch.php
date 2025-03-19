@@ -36,6 +36,7 @@ class Scratch extends Command
 
             $bookmark = Bookmark::create([
                 'url' => 'http://example.com',
+                'user_email' => 'example@example.com',
             ]);
         }
 
