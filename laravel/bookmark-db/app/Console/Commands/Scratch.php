@@ -26,10 +26,26 @@ class Scratch extends Command
      */
     public function handle()
     {
-        $this->info('Creating bookmark...');
+        $this->info('Finding bookmark...');
 
-        Bookmark::create([
-            'Url' => 'http://example.com',
-        ]);
+        $bookmark = Bookmark::where('url', 'http://example.com')->first();
+
+
+        if (!$bookmark) {
+            $this->info('Bookmark not found, creating...');
+
+            $bookmark = Bookmark::create([
+                'url' => 'http://example.com',
+            ]);
+        }
+
+        $this->info('Bookmark attributes:');
+        dump($bookmark->toArray());
+
+        $this->info('Updating bookmark...');
+        $bookmark->touch();
+        $bookmark->save();
+
+        dd($bookmark->toArray());
     }
 }

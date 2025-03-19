@@ -1,12 +1,20 @@
+provider "aws" {
+  default_tags {
+    tags = {
+      App = "laravel-bookmark-db"
+    }
+  }
+}
+
 resource "aws_dynamodb_table" "bookmarks" {
-  name           = "Bookmarks"
+  name           = "bookmarks"
   billing_mode   = "PROVISIONED"
   read_capacity  = 1
   write_capacity = 1
-  hash_key       = "Url"
+  hash_key       = "url"
 
   attribute {
-    name = "Url"
+    name = "url"
     type = "S"
   }
 }
