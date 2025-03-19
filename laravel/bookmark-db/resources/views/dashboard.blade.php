@@ -11,6 +11,11 @@
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     {{ __("You're logged in!") }}
                 </div>
+                <div class="p-6 text-gray-900 dark:text-gray-100">
+                    <a href="{{ route('bookmarks.index') }}" class="inline-block px-4 py-2 bg-blue-500 text-white font-semibold text-sm rounded-lg hover:bg-blue-700">
+                        {{ __('View Bookmarks') }}
+                    </a>
+                </div>
             </div>
         </div>
     </div>
