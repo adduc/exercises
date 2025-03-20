@@ -2,6 +2,9 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+use App\Models\User;
+use Illuminate\Http\Request;
+
 /*
 |--------------------------------------------------------------------------
 | Application Routes
@@ -13,6 +16,27 @@
 |
 */
 
-$router->get('/', function () use ($router) {
-    return $router->app->version();
+$router->get('/', fn () => view('index'));
+
+
+$router->get('/register', fn () => view('register'));
+$router->post('/register', function (Request $request) {
+
+    $data = $this->validate($request, [
+        'email' => 'required|email|unique:'. User::class,
+        'password' => 'required|min:6',
+        'confirm_password' => 'required|same:password',
+    ]);
+
+    $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+
+    $user = User::create([
+        'email' => $data['email'],
+        'password' => $data['password'],
+    ]);
+
+    return redirect('/login');
 });
+
+
+$router->get('/login', fn () => view('login'));
