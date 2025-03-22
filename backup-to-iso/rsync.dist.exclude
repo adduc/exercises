@@ -1,0 +1,20 @@
++ .hg/**
++ .git/**
+
+# terraform dependencies
+- **/.terraform
+
+# python dependencies
+- **/.venv
+
+# npm dependencies
+- **/node_modules
+
+# composer dependencies
+- **/vendor
+
+# ollama data
+- **/data/models/blobs
+
+# backup image
+- **/squashfs.img

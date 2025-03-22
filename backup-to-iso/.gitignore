@@ -1,0 +1,13 @@
+# Encryption key for LUKS
+luks.key
+
+# List of files and directories to ignore when backing up
+rsync.exclude
+
+# Generated volume, ready to be burned to a disc
+backup.img
+
+# Backup filesystem
+backup
+
+.env
