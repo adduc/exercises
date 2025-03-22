@@ -1,4 +1,4 @@
-module github.com/adduc/exercises/golang-auth
+module github.com/adduc/exercises/golang/auth
 
 go 1.24.0
 
