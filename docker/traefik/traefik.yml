@@ -1,0 +1,23 @@
+##
+# Traefik Static Configuration
+#
+# @see https://doc.traefik.io/traefik/reference/install-configuration/boot-environment/#file
+##
+
+# API Configuration
+
+api:
+  insecure: true
+
+# EntryPoints Configuration
+
+entryPoints:
+  web:
+    address: :80
+
+# Providers Configuration
+
+providers:
+  file:
+    filename: /dynamic.yml
+    watch: true

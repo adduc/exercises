@@ -1,0 +1,16 @@
+##
+# Running Traefik
+#
+# Traefik can be run in many different ways, but for the purposes of
+# this exercise, we configure it to load its static configuration from a
+# `traefik.yml` file.
+##
+
+services:
+  proxy:
+    image: traefik:v3
+    command: --configFile=/traefik.yml
+    ports: ["80:80", "8080:8080"]
+    volumes:
+      - ./traefik.yml:/traefik.yml
+      - ./dynamic.yml:/dynamic.yml

@@ -1,0 +1,19 @@
+##
+# Dynamic configuration for Traefik
+#
+# @see https://doc.traefik.io/traefik/reference/install-configuration/providers/others/file/
+##
+
+http:
+  routers:
+    example-router:
+      entrypoints: ["web"]
+      rule: "HostRegexp(`example\\..*`)"
+      service: example-service
+
+  services:
+    example-service:
+      loadBalancer:
+        passHostHeader: false
+        servers:
+          - url: "http://example.com"
