@@ -1,7 +1,7 @@
 {
     "autoload": {
         "psr-4": {
-            "Adduc\\Encodering\\Gob\\": "src/"
+            "Adduc\\Encoding\\Gob\\": "src/"
         },
         "files": [
             "src/functions.php"
