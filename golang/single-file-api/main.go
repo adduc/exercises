@@ -453,7 +453,7 @@ func LoginPost(c *gin.Context) {
 	session := NewSession(user)
 
 	if err := Repos.Session.CreateSession(session); err != nil {
-		c.HTML(500, "register.html", gin.H{"error": "Failed to create session"})
+		c.HTML(500, "login.html", gin.H{"error": "Failed to create session"})
 		return
 	}
 
