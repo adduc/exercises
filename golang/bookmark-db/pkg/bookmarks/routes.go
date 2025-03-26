@@ -72,12 +72,12 @@ func CreateBookmarkPost(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/bookmarks")
 }
 
-type BookmarkUri struct {
+type BookmarkURI struct {
 	ID int `uri:"id" binding:"required"`
 }
 
 func EditBookmark(c *gin.Context) {
-	var uri BookmarkUri
+	var uri BookmarkURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
 		return
@@ -107,7 +107,7 @@ type EditBookmarkInput struct {
 }
 
 func EditBookmarkPost(c *gin.Context) {
-	var uri BookmarkUri
+	var uri BookmarkURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
 		return
@@ -151,7 +151,7 @@ func EditBookmarkPost(c *gin.Context) {
 }
 
 func DeleteBookmark(c *gin.Context) {
-	var uri BookmarkUri
+	var uri BookmarkURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
 		return
@@ -176,7 +176,7 @@ func DeleteBookmark(c *gin.Context) {
 }
 
 func DeleteBookmarkPost(c *gin.Context) {
-	var uri BookmarkUri
+	var uri BookmarkURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
 		return
