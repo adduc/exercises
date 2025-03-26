@@ -35,6 +35,11 @@ import (
 // main
 
 func main() {
+
+	InitEnv()
+	InitDB()
+	InitRepos()
+
 	fmt.Println("Hi from " + Config.AppName)
 
 	e := newRouter()
@@ -71,7 +76,7 @@ var Config struct {
 	SessionCookieName string `env:"SESSION_COOKIE_NAME" envDefault:"session_token"`
 }
 
-func init() {
+func InitEnv() {
 	if err := env.Parse(&Config); err != nil {
 		panic(err)
 	}
@@ -88,7 +93,7 @@ var DBs struct {
 	Default gorm.DB
 }
 
-func init() {
+func InitDB() {
 	DBs.Default = dbErrorHandler(NewPrimaryDB())
 	dbErrorHandler(MigratePrimaryDB())
 }
@@ -174,7 +179,7 @@ var Repos struct {
 	User     UserRepository
 }
 
-func init() {
+func InitRepos() {
 	Repos.Bookmark = &BookmarkDBRepository{db: DBs.Default}
 	Repos.Session = &SessionDBRepository{db: DBs.Default}
 	Repos.User = &UserDBRepository{db: DBs.Default}
