@@ -2,7 +2,6 @@ package bookmarks
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/adduc/exercises/golang/bookmark-db/pkg/bookmarks/models"
 	sessionModels "github.com/adduc/exercises/golang/bookmark-db/pkg/sessions/models"
@@ -73,22 +72,20 @@ func CreateBookmarkPost(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/bookmarks")
 }
 
-func EditBookmark(c *gin.Context) {
-	id, ok := c.Params.Get("id")
-	if !ok {
-		c.String(http.StatusBadRequest, "Invalid bookmark ID")
-		return
-	}
+type BookmarkURI struct {
+	ID int `uri:"id" binding:"required"`
+}
 
-	bookmarkID, err := strconv.Atoi(id)
-	if err != nil {
+func EditBookmark(c *gin.Context) {
+	var uri BookmarkURI
+	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
 		return
 	}
 
 	session := c.MustGet("session").(*sessionModels.Session)
 
-	bookmark, err := Repos.Bookmark.GetBookmarkByID(bookmarkID)
+	bookmark, err := Repos.Bookmark.GetBookmarkByID(uri.ID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
 		return
@@ -110,21 +107,15 @@ type EditBookmarkInput struct {
 }
 
 func EditBookmarkPost(c *gin.Context) {
-	id, ok := c.Params.Get("id")
-	if !ok {
-		c.String(http.StatusBadRequest, "Invalid bookmark ID")
-		return
-	}
-
-	bookmarkID, err := strconv.Atoi(id)
-	if err != nil {
+	var uri BookmarkURI
+	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
 		return
 	}
 
 	session := c.MustGet("session").(*sessionModels.Session)
 
-	bookmark, err := Repos.Bookmark.GetBookmarkByID(bookmarkID)
+	bookmark, err := Repos.Bookmark.GetBookmarkByID(uri.ID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
 		return
@@ -160,21 +151,15 @@ func EditBookmarkPost(c *gin.Context) {
 }
 
 func DeleteBookmark(c *gin.Context) {
-	id, ok := c.Params.Get("id")
-	if !ok {
-		c.String(http.StatusBadRequest, "Invalid bookmark ID")
-		return
-	}
-
-	bookmarkID, err := strconv.Atoi(id)
-	if err != nil {
+	var uri BookmarkURI
+	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
 		return
 	}
 
 	session := c.MustGet("session").(*sessionModels.Session)
 
-	bookmark, err := Repos.Bookmark.GetBookmarkByID(bookmarkID)
+	bookmark, err := Repos.Bookmark.GetBookmarkByID(uri.ID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
 		return
@@ -191,21 +176,15 @@ func DeleteBookmark(c *gin.Context) {
 }
 
 func DeleteBookmarkPost(c *gin.Context) {
-	id, ok := c.Params.Get("id")
-	if !ok {
-		c.String(http.StatusBadRequest, "Invalid bookmark ID")
-		return
-	}
-
-	bookmarkID, err := strconv.Atoi(id)
-	if err != nil {
+	var uri BookmarkURI
+	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
 		return
 	}
 
 	session := c.MustGet("session").(*sessionModels.Session)
 
-	bookmark, err := Repos.Bookmark.GetBookmarkByID(bookmarkID)
+	bookmark, err := Repos.Bookmark.GetBookmarkByID(uri.ID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
 		return
@@ -216,7 +195,7 @@ func DeleteBookmarkPost(c *gin.Context) {
 		return
 	}
 
-	if _, err := Repos.Bookmark.DeleteBookmarkByID(bookmarkID); err != nil {
+	if _, err := Repos.Bookmark.DeleteBookmarkByID(uri.ID); err != nil {
 		c.HTML(500, "bookmarks.delete.html", gin.H{
 			"error":    "Failed to delete bookmark",
 			"bookmark": bookmark,
