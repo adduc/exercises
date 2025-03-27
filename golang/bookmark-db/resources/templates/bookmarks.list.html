@@ -12,9 +12,9 @@
         {{ range .bookmarks }}
             <details>
                 <summary>
-                    {{ .Url }}
+                    {{ .URL }}
                 </summary>
-                <a href="{{ .Url }}" target="_blank">Open</a> /
+                <a href="{{ .URL }}" target="_blank">Open</a> /
                 <a href="/bookmarks/{{ .ID }}/edit">Edit</a> /
                 <a href="/bookmarks/{{ .ID }}/delete">Delete</a>
                 <p>{{ .Note }}</p>

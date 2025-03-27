@@ -45,7 +45,7 @@ func CreateBookmark(c *gin.Context) {
 }
 
 type CreateBookmarkInput struct {
-	Url  string `form:"url" binding:"required,url"`
+	URL  string `form:"url" binding:"required,url"`
 	Note string `form:"note" binding:"max=1024"`
 }
 
@@ -60,7 +60,7 @@ func CreateBookmarkPost(c *gin.Context) {
 
 	bookmark := &models.Bookmark{
 		UserID: session.UserID,
-		Url:    input.Url,
+		URL:    input.URL,
 		Note:   input.Note,
 	}
 
@@ -102,7 +102,7 @@ func EditBookmark(c *gin.Context) {
 }
 
 type EditBookmarkInput struct {
-	Url  string `form:"url" binding:"required,url"`
+	URL  string `form:"url" binding:"required,url"`
 	Note string `form:"note" binding:"max=1024"`
 }
 
@@ -136,7 +136,7 @@ func EditBookmarkPost(c *gin.Context) {
 		return
 	}
 
-	bookmark.Url = input.Url
+	bookmark.URL = input.URL
 	bookmark.Note = input.Note
 
 	if err := Repos.Bookmark.UpdateBookmark(bookmark); err != nil {
