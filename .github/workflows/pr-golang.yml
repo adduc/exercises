@@ -34,6 +34,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: find
     strategy:
+      fail-fast: false
       matrix:
         dir: ${{ fromJson(needs.find.outputs.dirs) }}
     steps:
