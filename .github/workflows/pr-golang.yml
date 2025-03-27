@@ -10,6 +10,9 @@ on:
       # Go dependencies
       - '**/go.*'
 
+permissions:
+  contents: read # used by actions/checkout
+
 jobs:
   find:
     name: find go.mod files
@@ -37,8 +40,12 @@ jobs:
 
       - name: Setup Go
         uses: actions/setup-go@v5
-        with: { go-version: stable }
+        with:
+          go-version-file: ${{ matrix.dir }}/go.mod
+          cache-dependency-path: ${{ matrix.dir }}/go.sum
 
       - name: Lint
         uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd # v7.0.0
-        with: { version: v2.0, working-directory: ${{ matrix.dir }} }
+        with:
+          version: v2.0
+          working-directory: ${{ matrix.dir }}
