@@ -13,7 +13,8 @@ import (
 func NewBookmarkRepository() (BookmarkRepository, error) {
 	switch config.Config.DBType {
 	case "sqlite":
-		return NewBookmarkDBRepository(databases.DBs.Default), nil
+		db := databases.GetDefaultDB()
+		return NewBookmarkDBRepository(db), nil
 	case "memory":
 		return NewInMemoryBookmarkRepository(), nil
 	default:

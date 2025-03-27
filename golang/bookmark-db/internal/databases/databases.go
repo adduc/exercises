@@ -5,26 +5,42 @@ import (
 	"gorm.io/gorm"
 )
 
-var DBs struct {
+var databases struct {
 	Default *gorm.DB
 }
 
-func InitDatabases() {
-	DBs.Default = dbErrorHandler(NewPrimaryDB())
-}
-
-func dbErrorHandler(db *gorm.DB, err error) *gorm.DB {
-	if err != nil {
-		panic(err)
-	}
-	return db
-}
-
-func NewPrimaryDB() (*gorm.DB, error) {
+// Opens a new connection to the default database
+//
+// This function should not typically be called directly except for
+// specific cases like testing or migrations
+func NewDefaultDB() (*gorm.DB, error) {
+	// TODO: use config to determine database connection parameters
+	// TODO: optimize SQLite connection
 	return gorm.Open(sqlite.Open("db.sqlite"), &gorm.Config{})
 }
 
-// return either the entity or an error
+// Returns the default database connection (or creates one if it doesn't
+// exist)
+func GetDefaultDB() *gorm.DB {
+	if databases.Default == nil {
+		databases.Default = dbErrorHandler(NewDefaultDB())
+	}
+
+	return databases.Default
+}
+
+// Sets the default database connection
+//
+// This function should not typically be called directly except for
+// specific cases like testing
+func SetDefaultDB(db *gorm.DB) {
+	databases.Default = db
+}
+
+// Handles a single database result
+//
+// Returns the entity if it was found, nil if it wasn't, or an error if
+// one occurred
 func HandleSingleDBResult[T any](entity *T, result *gorm.DB) (*T, error) {
 	if result.Error != nil {
 		return nil, result.Error
@@ -35,4 +51,12 @@ func HandleSingleDBResult[T any](entity *T, result *gorm.DB) (*T, error) {
 	}
 
 	return entity, nil
+}
+
+// Wrapper for gorm.DB.Error that panics if an error is encountered
+func dbErrorHandler(db *gorm.DB, err error) *gorm.DB {
+	if err != nil {
+		panic(err)
+	}
+	return db
 }

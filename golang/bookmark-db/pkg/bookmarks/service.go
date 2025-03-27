@@ -19,7 +19,7 @@ func Init(router *gin.Engine, authGroup *gin.RouterGroup) error {
 }
 
 func Migrate() (*gorm.DB, error) {
-	return databases.DBs.Default, databases.DBs.Default.AutoMigrate(
+	return databases.GetDefaultDB(), databases.GetDefaultDB().AutoMigrate(
 		&models.Bookmark{},
 	)
 }

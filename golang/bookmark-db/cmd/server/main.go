@@ -4,7 +4,6 @@ import (
 	"html/template"
 
 	"github.com/adduc/exercises/golang/bookmark-db/internal/config"
-	"github.com/adduc/exercises/golang/bookmark-db/internal/databases"
 	"github.com/adduc/exercises/golang/bookmark-db/internal/databases/migrate"
 	"github.com/adduc/exercises/golang/bookmark-db/pkg/auth"
 	"github.com/adduc/exercises/golang/bookmark-db/pkg/bookmarks"
@@ -16,7 +15,6 @@ import (
 
 func main() {
 	config.InitConfig()
-	databases.InitDatabases()
 	migrate.Migrate()
 
 	router, authGroup := newRouter()

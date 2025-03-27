@@ -7,7 +7,7 @@ import (
 )
 
 func initRepos() {
-	Repos.User = &UserDBRepository{db: databases.DBs.Default}
+	Repos.User = &UserDBRepository{db: databases.GetDefaultDB()}
 }
 
 var Repos struct {

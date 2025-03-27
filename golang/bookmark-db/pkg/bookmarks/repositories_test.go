@@ -60,7 +60,7 @@ func TestNewBookmarkRepository(t *testing.T) {
 
 	// Test for sqlite
 	config.Config.DBType = "sqlite"
-	databases.DBs.Default = setupTestDB()
+	databases.SetDefaultDB(setupTestDB())
 	repo, err := NewBookmarkRepository()
 	assert.NoError(t, err)
 	assert.NotNil(t, repo)
