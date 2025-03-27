@@ -10,18 +10,14 @@ import (
 	"gorm.io/gorm"
 )
 
-var Repos struct {
-	Bookmark BookmarkRepository
-}
-
-func initRepos() {
+func NewBookmarkRepository() (BookmarkRepository, error) {
 	switch config.Config.DBType {
 	case "sqlite":
-		Repos.Bookmark = NewBookmarkDBRepository(databases.DBs.Default)
+		return NewBookmarkDBRepository(databases.DBs.Default), nil
 	case "memory":
-		Repos.Bookmark = NewInMemoryBookmarkRepository()
+		return NewInMemoryBookmarkRepository(), nil
 	default:
-		panic("unsupported database type")
+		return nil, errors.New("unsupported database type")
 	}
 }
 

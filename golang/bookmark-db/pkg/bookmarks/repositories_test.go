@@ -54,26 +54,30 @@ func testBookmarkRepository(t *testing.T, repo BookmarkRepository) {
 	assert.Nil(t, fetchedBookmark)
 }
 
-func TestInitRepos(t *testing.T) {
+func TestNewBookmarkRepository(t *testing.T) {
 	// Backup original config
 	originalConfig := config.Config
 
 	// Test for sqlite
 	config.Config.DBType = "sqlite"
 	databases.DBs.Default = setupTestDB()
-	initRepos()
-	assert.NotNil(t, Repos.Bookmark)
-	assert.IsType(t, &BookmarkDBRepository{}, Repos.Bookmark)
+	repo, err := NewBookmarkRepository()
+	assert.NoError(t, err)
+	assert.NotNil(t, repo)
+	assert.IsType(t, &BookmarkDBRepository{}, repo)
 
 	// Test for memory
 	config.Config.DBType = "memory"
-	initRepos()
-	assert.NotNil(t, Repos.Bookmark)
-	assert.IsType(t, &InMemoryBookmarkRepository{}, Repos.Bookmark)
+	repo, err = NewBookmarkRepository()
+	assert.NoError(t, err)
+	assert.NotNil(t, repo)
+	assert.IsType(t, &InMemoryBookmarkRepository{}, repo)
 
 	// Test for unsupported database type
 	config.Config.DBType = "unsupported"
-	assert.Panics(t, initRepos)
+	repo, err = NewBookmarkRepository()
+	assert.Error(t, err)
+	assert.Nil(t, repo)
 
 	// Restore original config
 	config.Config = originalConfig
