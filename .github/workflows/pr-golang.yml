@@ -15,25 +15,26 @@ permissions:
 
 jobs:
   find:
-    name: find go.mod files
+    name: Find go.mod files
     runs-on: ubuntu-24.04
     outputs:
-      dirs: ${{ toJson(steps.find-mod.outputs) }}
+      dirs: ${{ steps.find-mod.outputs.dirs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Find go.mod files
         id: find-mod
-        run: find . -name go.mod -exec dirname {} + | sort | uniq
-
+        run: |
+          DIRS=$(find . -name go.mod -exec dirname {} \; | sort | uniq)
+          echo "$DIRS" | tee $GITHUB_OUTPUT
   lint:
     name: Lint
     runs-on: ubuntu-24.04
     needs: find
     strategy:
       matrix:
-        dir: ${{fromJson(needs.find.outputs.dirs)}}
+        dir: ${{ steps.find-mod.outputs.dirs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
