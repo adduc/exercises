@@ -11,12 +11,34 @@ on:
       - '**/go.*'
 
 jobs:
-  lint:
-    name: lint
+  find:
+    name: find go.mod files
     runs-on: ubuntu-24.04
+    outputs:
+      dirs: ${{ toJson(steps.find-mod.outputs) }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find go.mod files
+        id: find-mod
+        run: find . -name go.mod -exec dirname {} + | sort | uniq
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    needs: find
+    strategy:
+      matrix:
+        dir: ${{fromJson(needs.find.outputs.dirs)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with: { go-version: stable }
-      - uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd # v7.0.0
-        with: { version: v2.0 }
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd # v7.0.0
+        with: { version: v2.0, working-directory: ${{ matrix.dir }} }
