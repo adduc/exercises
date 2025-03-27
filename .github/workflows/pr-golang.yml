@@ -27,7 +27,7 @@ jobs:
         id: find-mod
         run: |
           DIRS=$(find . -name go.mod -exec dirname {} \; | sort | uniq)
-          echo "$DIRS" | tee $GITHUB_OUTPUT
+          echo "dirs=$DIRS" | tee $GITHUB_OUTPUT
   lint:
     name: Lint
     runs-on: ubuntu-24.04
