@@ -7,13 +7,19 @@ import (
 	"gorm.io/gorm"
 )
 
-func Init(router *gin.Engine, authGroup *gin.RouterGroup) {
-	initRepos()
-	initRoutes(router, authGroup)
+func Init(router *gin.Engine, authGroup *gin.RouterGroup) error {
+	repo, err := NewBookmarkRepository()
+	if err != nil {
+		return err
+	}
+
+	c := newBookmarkController(repo)
+	c.RegisterRoutes(router, authGroup)
+	return nil
 }
 
 func Migrate() (*gorm.DB, error) {
-	return databases.DBs.Default, databases.DBs.Default.AutoMigrate(
+	return databases.GetDefaultDB(), databases.GetDefaultDB().AutoMigrate(
 		&models.Bookmark{},
 	)
 }

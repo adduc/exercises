@@ -13,7 +13,7 @@
     {{ end }}
     <form method="post">
         <label for="url">URL:</label>
-        <input type="url" id="url" name="url" required value="{{ .bookmark.Url }}"><br><br>
+        <input type="url" id="url" name="url" required value="{{ .bookmark.URL }}"><br><br>
         <label for="note">Note:</label>
         <textarea id="note" name="note">{{ .bookmark.Note }}</textarea><br><br>
         <button type="submit">Edit Bookmark</button>

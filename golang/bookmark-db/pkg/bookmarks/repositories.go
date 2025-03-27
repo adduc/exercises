@@ -1,17 +1,25 @@
 package bookmarks
 
 import (
+	"errors"
+	"sync"
+
+	"github.com/adduc/exercises/golang/bookmark-db/internal/config"
 	"github.com/adduc/exercises/golang/bookmark-db/internal/databases"
 	"github.com/adduc/exercises/golang/bookmark-db/pkg/bookmarks/models"
 	"gorm.io/gorm"
 )
 
-var Repos struct {
-	Bookmark BookmarkRepository
-}
-
-func initRepos() {
-	Repos.Bookmark = &BookmarkDBRepository{db: databases.DBs.Default}
+func NewBookmarkRepository() (BookmarkRepository, error) {
+	switch config.Config.DBType {
+	case "sqlite":
+		db := databases.GetDefaultDB()
+		return NewBookmarkDBRepository(db), nil
+	case "memory":
+		return NewInMemoryBookmarkRepository(), nil
+	default:
+		return nil, errors.New("unsupported database type")
+	}
 }
 
 type BookmarkRepository interface {
@@ -24,6 +32,10 @@ type BookmarkRepository interface {
 
 type BookmarkDBRepository struct {
 	db *gorm.DB
+}
+
+func NewBookmarkDBRepository(db *gorm.DB) *BookmarkDBRepository {
+	return &BookmarkDBRepository{db: db}
 }
 
 func (r *BookmarkDBRepository) CreateBookmark(bookmark *models.Bookmark) error {
@@ -54,4 +66,74 @@ func (r *BookmarkDBRepository) GetBookmarksByUserID(userID int) (bookmarks []*mo
 func (r *BookmarkDBRepository) GetBookmarkByID(id int) (bookmark *models.Bookmark, _ error) {
 	result := r.db.Where("id = ?", id).Limit(1).Find(&bookmark)
 	return databases.HandleSingleDBResult(bookmark, result)
+}
+
+// InMemoryBookmarkRepository is an in-memory implementation of BookmarkRepository
+type InMemoryBookmarkRepository struct {
+	mu        sync.Mutex
+	bookmarks map[int]*models.Bookmark
+	nextID    int
+}
+
+func NewInMemoryBookmarkRepository() *InMemoryBookmarkRepository {
+	return &InMemoryBookmarkRepository{
+		bookmarks: make(map[int]*models.Bookmark),
+		nextID:    1,
+	}
+}
+
+func (r *InMemoryBookmarkRepository) CreateBookmark(bookmark *models.Bookmark) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	bookmark.ID = r.nextID
+	r.bookmarks[r.nextID] = bookmark
+	r.nextID++
+	return nil
+}
+
+func (r *InMemoryBookmarkRepository) UpdateBookmark(bookmark *models.Bookmark) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, exists := r.bookmarks[bookmark.ID]; !exists {
+		return errors.New("bookmark not found")
+	}
+	r.bookmarks[bookmark.ID] = bookmark
+	return nil
+}
+
+func (r *InMemoryBookmarkRepository) DeleteBookmarkByID(id int) (bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, exists := r.bookmarks[id]; !exists {
+		return false, errors.New("bookmark not found")
+	}
+	delete(r.bookmarks, id)
+	return true, nil
+}
+
+func (r *InMemoryBookmarkRepository) GetBookmarksByUserID(userID int) ([]*models.Bookmark, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var bookmarks []*models.Bookmark
+	for _, bookmark := range r.bookmarks {
+		if bookmark.UserID == userID {
+			bookmarks = append(bookmarks, bookmark)
+		}
+	}
+	return bookmarks, nil
+}
+
+func (r *InMemoryBookmarkRepository) GetBookmarkByID(id int) (*models.Bookmark, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	bookmark, exists := r.bookmarks[id]
+	if !exists {
+		return nil, nil
+	}
+	return bookmark, nil
 }

@@ -7,11 +7,11 @@ import (
 )
 
 func initRepos() {
-	Repos.Session = &SessionDBRepository{db: databases.DBs.Default}
+	Repos.Session = &SessionDBRepository{db: databases.GetDefaultDB()}
 }
 
 func Migrate() (*gorm.DB, error) {
-	return databases.DBs.Default, databases.DBs.Default.AutoMigrate(
+	return databases.GetDefaultDB(), databases.GetDefaultDB().AutoMigrate(
 		&models.Session{},
 	)
 }

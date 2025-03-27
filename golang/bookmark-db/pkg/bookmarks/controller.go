@@ -8,28 +8,38 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func initRoutes(router *gin.Engine, authGroup *gin.RouterGroup) {
-	registerAuthzRoutes(authGroup)
+type BookmarkController struct {
+	BookmarkRepository BookmarkRepository
 }
 
-func registerAuthzRoutes(e *gin.RouterGroup) {
-	e.GET("/bookmarks", ListBookmarks)
-	e.GET("/bookmarks/create", CreateBookmark)
-	e.POST("/bookmarks/create", CreateBookmarkPost)
-	e.GET("/bookmarks/:id/edit", EditBookmark)
-	e.POST("/bookmarks/:id/edit", EditBookmarkPost)
-	e.GET("/bookmarks/:id/delete", DeleteBookmark)
-	e.POST("/bookmarks/:id/delete", DeleteBookmarkPost)
+func newBookmarkController(repo BookmarkRepository) *BookmarkController {
+	return &BookmarkController{
+		BookmarkRepository: repo,
+	}
 }
 
-func ListBookmarks(c *gin.Context) {
+func (bc *BookmarkController) RegisterRoutes(router *gin.Engine, authGroup *gin.RouterGroup) {
+	bc.registerAuthRoutes(authGroup)
+}
+
+func (bc *BookmarkController) registerAuthRoutes(rg *gin.RouterGroup) {
+	rg.GET("/bookmarks", bc.ListBookmarks)
+	rg.GET("/bookmarks/create", bc.CreateBookmark)
+	rg.POST("/bookmarks/create", bc.CreateBookmarkPost)
+	rg.GET("/bookmarks/:id/edit", bc.EditBookmark)
+	rg.POST("/bookmarks/:id/edit", bc.EditBookmarkPost)
+	rg.GET("/bookmarks/:id/delete", bc.DeleteBookmark)
+	rg.POST("/bookmarks/:id/delete", bc.DeleteBookmarkPost)
+}
+
+func (bc *BookmarkController) ListBookmarks(c *gin.Context) {
 	session := c.MustGet("session").(*sessionModels.Session)
 	userID := session.UserID
 
 	var bookmarks []*models.Bookmark
 
 	// @todo paginate bookmarks
-	bookmarks, err := Repos.Bookmark.GetBookmarksByUserID(userID)
+	bookmarks, err := bc.BookmarkRepository.GetBookmarksByUserID(userID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch bookmarks")
 		return
@@ -40,16 +50,16 @@ func ListBookmarks(c *gin.Context) {
 	})
 }
 
-func CreateBookmark(c *gin.Context) {
+func (bc *BookmarkController) CreateBookmark(c *gin.Context) {
 	c.HTML(200, "bookmarks.create.html", gin.H{})
 }
 
 type CreateBookmarkInput struct {
-	Url  string `form:"url" binding:"required,url"`
+	URL  string `form:"url" binding:"required,url"`
 	Note string `form:"note" binding:"max=1024"`
 }
 
-func CreateBookmarkPost(c *gin.Context) {
+func (bc *BookmarkController) CreateBookmarkPost(c *gin.Context) {
 	var input CreateBookmarkInput
 	if err := c.ShouldBind(&input); err != nil {
 		c.HTML(400, "bookmarks.create.html", gin.H{"error": "Invalid input"})
@@ -60,11 +70,11 @@ func CreateBookmarkPost(c *gin.Context) {
 
 	bookmark := &models.Bookmark{
 		UserID: session.UserID,
-		Url:    input.Url,
+		URL:    input.URL,
 		Note:   input.Note,
 	}
 
-	if err := Repos.Bookmark.CreateBookmark(bookmark); err != nil {
+	if err := bc.BookmarkRepository.CreateBookmark(bookmark); err != nil {
 		c.HTML(500, "bookmarks.create.html", gin.H{"error": "Failed to create bookmark"})
 		return
 	}
@@ -76,7 +86,7 @@ type BookmarkURI struct {
 	ID int `uri:"id" binding:"required"`
 }
 
-func EditBookmark(c *gin.Context) {
+func (bc *BookmarkController) EditBookmark(c *gin.Context) {
 	var uri BookmarkURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
@@ -85,7 +95,7 @@ func EditBookmark(c *gin.Context) {
 
 	session := c.MustGet("session").(*sessionModels.Session)
 
-	bookmark, err := Repos.Bookmark.GetBookmarkByID(uri.ID)
+	bookmark, err := bc.BookmarkRepository.GetBookmarkByID(uri.ID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
 		return
@@ -102,11 +112,11 @@ func EditBookmark(c *gin.Context) {
 }
 
 type EditBookmarkInput struct {
-	Url  string `form:"url" binding:"required,url"`
+	URL  string `form:"url" binding:"required,url"`
 	Note string `form:"note" binding:"max=1024"`
 }
 
-func EditBookmarkPost(c *gin.Context) {
+func (bc *BookmarkController) EditBookmarkPost(c *gin.Context) {
 	var uri BookmarkURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
@@ -115,7 +125,7 @@ func EditBookmarkPost(c *gin.Context) {
 
 	session := c.MustGet("session").(*sessionModels.Session)
 
-	bookmark, err := Repos.Bookmark.GetBookmarkByID(uri.ID)
+	bookmark, err := bc.BookmarkRepository.GetBookmarkByID(uri.ID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
 		return
@@ -136,10 +146,10 @@ func EditBookmarkPost(c *gin.Context) {
 		return
 	}
 
-	bookmark.Url = input.Url
+	bookmark.URL = input.URL
 	bookmark.Note = input.Note
 
-	if err := Repos.Bookmark.UpdateBookmark(bookmark); err != nil {
+	if err := bc.BookmarkRepository.UpdateBookmark(bookmark); err != nil {
 		c.HTML(500, "bookmarks.edit.html", gin.H{
 			"error":    "Failed to update bookmark",
 			"bookmark": bookmark,
@@ -150,7 +160,7 @@ func EditBookmarkPost(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/bookmarks")
 }
 
-func DeleteBookmark(c *gin.Context) {
+func (bc *BookmarkController) DeleteBookmark(c *gin.Context) {
 	var uri BookmarkURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
@@ -159,7 +169,7 @@ func DeleteBookmark(c *gin.Context) {
 
 	session := c.MustGet("session").(*sessionModels.Session)
 
-	bookmark, err := Repos.Bookmark.GetBookmarkByID(uri.ID)
+	bookmark, err := bc.BookmarkRepository.GetBookmarkByID(uri.ID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
 		return
@@ -175,7 +185,7 @@ func DeleteBookmark(c *gin.Context) {
 	})
 }
 
-func DeleteBookmarkPost(c *gin.Context) {
+func (bc *BookmarkController) DeleteBookmarkPost(c *gin.Context) {
 	var uri BookmarkURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.String(http.StatusBadRequest, "Invalid bookmark ID")
@@ -184,7 +194,7 @@ func DeleteBookmarkPost(c *gin.Context) {
 
 	session := c.MustGet("session").(*sessionModels.Session)
 
-	bookmark, err := Repos.Bookmark.GetBookmarkByID(uri.ID)
+	bookmark, err := bc.BookmarkRepository.GetBookmarkByID(uri.ID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch bookmark")
 		return
@@ -195,7 +205,7 @@ func DeleteBookmarkPost(c *gin.Context) {
 		return
 	}
 
-	if _, err := Repos.Bookmark.DeleteBookmarkByID(uri.ID); err != nil {
+	if _, err := bc.BookmarkRepository.DeleteBookmarkByID(uri.ID); err != nil {
 		c.HTML(500, "bookmarks.delete.html", gin.H{
 			"error":    "Failed to delete bookmark",
 			"bookmark": bookmark,
