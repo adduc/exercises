@@ -18,7 +18,7 @@ jobs:
     name: Find go.mod files
     runs-on: ubuntu-24.04
     outputs:
-      dirs: ${{ toJson(steps.find-mod.outputs.dirs) }}
+      dirs: ${{ steps.find-mod.outputs.dirs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,8 +26,9 @@ jobs:
       - name: Find go.mod files
         id: find-mod
         run: |
-          DIRS=$(find . -name go.mod -exec dirname {} \; | sort | uniq)
-          echo "dirs=\"$DIRS\"" | tee $GITHUB_OUTPUT
+          DIRS=$(find . -name go.mod -exec dirname {} \; | jq -cR '[inputs]')
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+
   lint:
     name: Lint
     runs-on: ubuntu-24.04
