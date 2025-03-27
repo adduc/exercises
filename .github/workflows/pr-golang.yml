@@ -34,7 +34,7 @@ jobs:
     needs: find
     strategy:
       matrix:
-        dir: ${{ steps.find-mod.outputs.dirs }}
+        dir: ${{ needs.find.outputs.dirs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
