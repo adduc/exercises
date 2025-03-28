@@ -1,0 +1,5 @@
+[ui]
+username = Example User <example@example.com>
+
+[alias]
+empty-commit = !$HG ci -m 'empty commit' --config ui.allowemptycommit=1
