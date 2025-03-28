@@ -1,6 +1,7 @@
 package bookmarks
 
 import (
+	"log"
 	"testing"
 
 	"github.com/adduc/exercises/golang/bookmark-db/internal/config"
@@ -12,8 +13,13 @@ import (
 )
 
 func setupTestDB() *gorm.DB {
-	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&models.Bookmark{})
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Failed to connect to the database: %v", err)
+	}
+	if err := db.AutoMigrate(&models.Bookmark{}); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
 	return db
 }
 

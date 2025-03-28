@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/adduc/exercises/golang/bookmark-db/pkg/auth/models"
@@ -113,7 +114,13 @@ func LoginPost(c *gin.Context) {
 
 func Logout(c *gin.Context) {
 	session := c.MustGet("session").(*sessionModels.Session)
-	sessions.Repos.Session.DeleteSessionByToken(session.Token)
+
+	if _, err := sessions.Repos.Session.DeleteSessionByToken(session.Token); err != nil {
+		log.Printf("Failed to delete session: %v\n", err)
+		c.String(500, "An issue occurred while logging out; please try again")
+		return
+	}
+
 	sessions.DeleteSessionCookie(c)
 
 	c.Redirect(http.StatusFound, "/")

@@ -1,0 +1,54 @@
+name: PR:Golang
+
+on:
+  pull_request:
+    paths:
+      # This workflow
+      - '.github/workflows/pr-golang.yml'
+      # Go files
+      - '**.go'
+      # Go dependencies
+      - '**/go.*'
+
+permissions:
+  contents: read # used by actions/checkout
+
+jobs:
+  find:
+    name: Find go.mod files
+    runs-on: ubuntu-24.04
+    outputs:
+      dirs: ${{ steps.find-mod.outputs.dirs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find go.mod files
+        id: find-mod
+        run: |
+          DIRS=$(find . -name go.mod -exec dirname {} \; | jq -cR '[inputs]')
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    needs: find
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJson(needs.find.outputs.dirs) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ matrix.dir }}/go.mod
+          cache-dependency-path: ${{ matrix.dir }}/go.sum
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd # v7.0.0
+        with:
+          version: v2.0
+          working-directory: ${{ matrix.dir }}

@@ -4,6 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Init(router *gin.Engine, authGroup *gin.RouterGroup) {
+func Init(router *gin.Engine, authGroup *gin.RouterGroup) error {
 	initRoutes(router, authGroup)
+
+	return nil
 }

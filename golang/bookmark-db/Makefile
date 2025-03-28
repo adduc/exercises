@@ -21,6 +21,11 @@ run: ## Run all binaries
 run/server: ## Run the web server
 	go run cmd/server/main.go
 
+## Test Commands
+
+test: ## Run tests
+	go test ./... -v
+
 ## Watch Commands (relies on gow)
 # @see https://github.com/mitranim/gow
 

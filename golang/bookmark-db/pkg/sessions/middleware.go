@@ -19,7 +19,7 @@ func LoadSession(c *gin.Context) {
 	session, err := Repos.Session.GetSessionByToken(sessionToken)
 
 	if err != nil {
-		c.AbortWithError(500, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 

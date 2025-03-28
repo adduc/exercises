@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/adduc/exercises/golang-counter-repository/domain/counter"
 	"gorm.io/driver/sqlite"
@@ -21,10 +22,13 @@ func testMemoryRepo() {
 
 func testPersistentDBRepo() {
 	db, err := gorm.Open(sqlite.Open("db.sqlite"), &gorm.Config{})
-	db.AutoMigrate(&counter.Counter{})
 
 	if err != nil {
-		panic("failed to connect database")
+		log.Fatalf("failed to connect database: %v", err)
+	}
+
+	if err := db.AutoMigrate(&counter.Counter{}); err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
 	}
 
 	repo := counter.NewDatabaseRepository(db)
@@ -33,10 +37,13 @@ func testPersistentDBRepo() {
 
 func testmemoryDBRepo() {
 	db, err := gorm.Open(sqlite.Open("file:memdb1?mode=memory&cache=shared"), &gorm.Config{})
-	db.AutoMigrate(&counter.Counter{})
 
 	if err != nil {
-		panic("failed to connect database")
+		log.Fatalf("failed to connect database: %v", err)
+	}
+
+	if err := db.AutoMigrate(&counter.Counter{}); err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
 	}
 
 	repo := counter.NewDatabaseRepository(db)
@@ -70,7 +77,10 @@ func testRepo(repo counter.Repository) {
 
 	// updating the counter should update the counter
 	obj.Value++
-	repo.Update(obj)
+	if err := repo.Update(obj); err != nil {
+		log.Fatalf("failed to update counter: %v", err)
+	}
+
 	fetchedCounter2, _ := repo.Get(obj.ID)
 	fmt.Println(
 		"update",
@@ -80,7 +90,10 @@ func testRepo(repo counter.Repository) {
 	)
 
 	// deleting the counter should remove the counter
-	repo.Delete(obj.ID)
+	if err := repo.Delete(obj.ID); err != nil {
+		log.Fatalf("failed to delete counter: %v", err)
+	}
+
 	fmt.Println(
 		"delete",
 		"counter", obj.ID, obj.Value,

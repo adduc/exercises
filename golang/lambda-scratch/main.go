@@ -34,7 +34,7 @@ func (l *LambdaRuntime) GetNextInvocation() (string, []byte) {
 	if err != nil {
 		panic(err)
 	}
-	defer resp.Body.Close()
+	defer panicIfError(resp.Body.Close())
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -52,7 +52,7 @@ func (l *LambdaRuntime) SendResponse(requestID string, body io.Reader) {
 	if err != nil {
 		panic(err)
 	}
-	defer resp.Body.Close()
+	defer panicIfError(resp.Body.Close())
 }
 
 type LambdaHandler func(requestID string, body []byte) io.Reader
@@ -63,6 +63,12 @@ func (l *LambdaRuntime) Run(fn LambdaHandler) {
 		requestID, body := l.GetNextInvocation()
 		response := fn(requestID, body)
 		l.SendResponse(requestID, response)
+	}
+}
+
+func panicIfError(err error) {
+	if err != nil {
+		panic(err)
 	}
 }
 
