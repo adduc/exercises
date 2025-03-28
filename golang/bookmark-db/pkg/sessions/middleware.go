@@ -1,7 +1,6 @@
 package sessions
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -20,9 +19,7 @@ func LoadSession(c *gin.Context) {
 	session, err := Repos.Session.GetSessionByToken(sessionToken)
 
 	if err != nil {
-		log.Printf("Failed to load session: %v\n", err)
-		c.Error(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 

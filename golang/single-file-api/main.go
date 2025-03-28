@@ -44,7 +44,9 @@ func main() {
 
 	e := newRouter()
 
-	e.Run(Config.ListenAddress)
+	if err := e.Run(Config.ListenAddress); err != nil {
+		panic(err)
+	}
 }
 
 func newRouter() *gin.Engine {
@@ -160,7 +162,9 @@ func generateSessionToken() string {
 	// generate 128-bit random token to use as session token
 	// @see https://owasp.org/www-community/vulnerabilities/Insufficient_Session-ID_Length
 	token := make([]byte, 16)
-	rand.Read(token)
+	// rand panics if it can't read from the source
+	// we can ignore the error
+	_, _ = rand.Read(token)
 	return base64.StdEncoding.EncodeToString(token)
 }
 
@@ -305,7 +309,7 @@ func LoadSession(c *gin.Context) {
 	session, err := Repos.Session.GetSessionByToken(sessionToken)
 
 	if err != nil {
-		c.AbortWithError(500, err)
+		_ = c.AbortWithError(500, err)
 		return
 	}
 
@@ -453,7 +457,7 @@ func LoginPost(c *gin.Context) {
 	session := NewSession(user)
 
 	if err := Repos.Session.CreateSession(session); err != nil {
-		c.HTML(500, "login.html", gin.H{"error": "Failed to create session"})
+		c.HTML(500, "register.html", gin.H{"error": "Failed to create session"})
 		return
 	}
 
@@ -463,7 +467,13 @@ func LoginPost(c *gin.Context) {
 
 func Logout(c *gin.Context) {
 	session, _ := c.Get("session")
-	Repos.Session.DeleteSessionByToken(session.(*Session).Token)
+
+	if _, err := Repos.Session.DeleteSessionByToken(session.(*Session).Token); err != nil {
+		fmt.Printf("Failed to delete session: %v\n", err)
+		c.String(500, "An issue occurred while logging out; please try again")
+		return
+	}
+
 	DeleteSessionCookie(c)
 
 	c.Redirect(http.StatusFound, "/")
