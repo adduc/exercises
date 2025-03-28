@@ -27,6 +27,9 @@ func generateSessionToken() string {
 	// generate 128-bit random token to use as session token
 	// @see https://owasp.org/www-community/vulnerabilities/Insufficient_Session-ID_Length
 	token := make([]byte, 16)
-	rand.Read(token)
+	if _, err := rand.Read(token); err != nil {
+		// This should be unreachable, but just in case
+		panic(err)
+	}
 	return base64.StdEncoding.EncodeToString(token)
 }
