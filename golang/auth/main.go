@@ -79,7 +79,9 @@ func main() {
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&User{}, &Session{})
+	if err := db.AutoMigrate(&User{}, &Session{}); err != nil {
+		log.Fatalf("Error migrating database: %v", err)
+	}
 
 	// Initialize gin
 	r := gin.Default()
@@ -213,5 +215,7 @@ func main() {
 		c.JSON(200, gin.H{"user": user})
 	})
 
-	r.Run()
+	if err := r.Run(); err != nil {
+		log.Fatal(err)
+	}
 }
