@@ -1,4 +1,4 @@
-name: PR:Golang
+name: PR:Bash
 
 on:
   pull_request:
