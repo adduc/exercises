@@ -11,6 +11,7 @@ preflight() {
   set -o nounset
 
   # Load in environment variable file (if it exists)
+  # shellcheck disable=SC1091 # don't worry about checking .env file
   [ -f .env ] && { set -a; source .env; set +a; }
 
   # Ensure required environment variables are set
@@ -42,7 +43,7 @@ preflight() {
 
 err() { echo "$@" 1>&2; }
 errexit() { err "$@"; exit 1; }
-require_env() { [ ! -z "$1" ] || errexit "Env var $1 is required, but not set"; }
+require_env() { [ -n "$1" ] || errexit "Env var $1 is required, but not set"; }
 
 encrypt() {
   for file in "$@"; do
