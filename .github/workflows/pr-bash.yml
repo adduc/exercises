@@ -1,4 +1,4 @@
-name: PR:Shell
+name: PR:Golang
 
 on:
   pull_request:
@@ -19,6 +19,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run ShellCheck Analysis
-        uses: reactive-firewall/shellcheck-scan@89ae54cd2b9d19a34e72712d986ebb21d8521dd3 #v1.1
+      - name: Setup ShellCheck
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
         with: { version: v0.10.0 }
+
+      - name: Lint (ShellCheck)
+        run: find . -name '*.sh' -execdir shellcheck {} \;
