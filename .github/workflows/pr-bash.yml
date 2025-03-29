@@ -6,7 +6,7 @@ on:
       # This workflow
       - '.github/workflows/pr-bash.yml'
       # Shell scripts
-      - '**.sh'
+      - '**/*.sh'
 
 permissions:
   contents: read # used by actions/checkout
