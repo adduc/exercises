@@ -1,0 +1,27 @@
+name: PR:Golang
+
+on:
+  pull_request:
+    paths:
+      # This workflow
+      - '.github/workflows/pr-bash.yml'
+      # Shell scripts
+      - '**.sh'
+
+permissions:
+  contents: read # used by actions/checkout
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup ShellCheck
+        uses: ludovicchabant/setup-shellcheck@00b27aa7cb85167568cb48a3838b75f4265f2bca
+        with: { version: v0.10.0 }
+
+      - name: Lint (ShellCheck)
+        run: find . -name '*.sh' -execdir shellcheck {} \;
