@@ -1,4 +1,4 @@
-name: PR:Golang
+name: PR:Shell
 
 on:
   pull_request:
@@ -20,4 +20,5 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run ShellCheck Analysis
-        uses: reactive-firewall/shellcheck-scan@v1
+        uses: reactive-firewall/shellcheck-scan@89ae54cd2b9d19a34e72712d986ebb21d8521dd3 #v1.1
+        with: { version: v0.10.0 }
