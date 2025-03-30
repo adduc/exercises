@@ -12,11 +12,26 @@ provider "aws" {
   }
 }
 
+## Required Providers
+
+terraform {
+  required_version = ">= 1.3.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+## Local Variables
+
 locals {
   app = "freetier-alb"
 }
 
-data "aws_availability_zones" "available" {}
+## Resources
 
 ##
 # VPC, subnets, internet gateway, route tables, etc.
@@ -41,7 +56,9 @@ module "vpc" {
 # @see https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/latest
 ##
 module "alb" {
-  source                     = "terraform-aws-modules/alb/aws"
+  source  = "terraform-aws-modules/alb/aws"
+  version = "~> 9.0"
+
   name                       = local.app
   vpc_id                     = module.vpc.vpc_id
   subnets                    = module.vpc.public_subnets

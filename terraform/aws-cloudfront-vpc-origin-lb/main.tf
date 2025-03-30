@@ -21,6 +21,19 @@ provider "aws" {
   }
 }
 
+## Required Providers
+
+terraform {
+  required_version = ">= 1.3.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 ## Data Sources
 
 data "aws_availability_zones" "available" {}
@@ -51,7 +64,8 @@ module "vpc" {
 ##
 
 module "cloudfront" {
-  source = "terraform-aws-modules/cloudfront/aws"
+  source  = "terraform-aws-modules/cloudfront/aws"
+  version = "~> 4.0"
 
   origin = {
     vpc_origin = {
@@ -90,7 +104,9 @@ data "aws_ec2_managed_prefix_list" "cloudfront" {
 ##
 
 module "lb" {
-  source                     = "terraform-aws-modules/alb/aws"
+  source  = "terraform-aws-modules/alb/aws"
+  version = "~> 9.0"
+
   name                       = local.app
   load_balancer_type         = "application"
   vpc_id                     = module.vpc.vpc_id

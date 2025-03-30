@@ -10,6 +10,17 @@ provider "aws" {
   }
 }
 
+terraform {
+  required_version = ">= 1.3.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 resource "aws_lambda_function" "lambda" {
   function_name = local.app_name
   role          = aws_iam_role.lambda_exec.arn

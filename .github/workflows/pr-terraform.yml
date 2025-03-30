@@ -1,0 +1,79 @@
+name: PR:Terraform
+
+on:
+  pull_request:
+    paths:
+      # This workflow
+      - '.github/workflows/pr-terraform.yml'
+      # Terraform configuration
+      - '**/*.tf'
+
+permissions:
+  contents: read # used by actions/checkout
+
+jobs:
+  find:
+    name: Find main.tf files
+    runs-on: ubuntu-24.04
+    outputs:
+      dirs: ${{ steps.find.outputs.dirs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find main.tf files
+        id: find
+        run: |
+          DIRS=$(find . -name main.tf -exec dirname {} \; | jq -cR '[inputs]')
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+
+  format:
+    name: Format
+    runs-on: ubuntu-24.04
+    needs: find
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJson(needs.find.outputs.dirs) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+        with: { terraform_version: "1.11.3" }
+
+      - name: Format Terraform
+        run: |
+          DIFF=$(terraform fmt diff -recursive ${{ matrix.dir }})
+          if [ -n "$DIFF" ]; then
+            echo "At least one Terraform file is not formatted correctly:"
+            echo "$DIFF"
+            exit 1
+          else
+            echo "All Terraform files are formatted correctly."
+          fi
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    needs: find
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJson(needs.find.outputs.dirs) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+        with: { terraform_version: "1.11.3" }
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6
+        with: { tflint_version: "v0.52.0" }
+
+      - name: Validate Terraform
+        run: tflint --chdir ${{ matrix.dir }}
+

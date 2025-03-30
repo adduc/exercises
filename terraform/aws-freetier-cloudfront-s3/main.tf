@@ -20,6 +20,19 @@ provider "aws" {
   }
 }
 
+## Required Providers
+
+terraform {
+  required_version = ">= 1.3.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 ## Data Sources
 
 data "aws_organizations_organization" "current" {}
@@ -28,7 +41,8 @@ data "aws_organizations_organization" "current" {}
 
 # @see https://github.com/terraform-aws-modules/terraform-aws-cloudfront
 module "cloudfront" {
-  source = "terraform-aws-modules/cloudfront/aws"
+  source  = "terraform-aws-modules/cloudfront/aws"
+  version = "~> 4.0"
 
   create_origin_access_identity = true
   origin_access_identities = {
@@ -68,7 +82,8 @@ module "cloudfront" {
 
 # @see https://github.com/terraform-aws-modules/terraform-aws-s3-bucket
 module "s3_bucket" {
-  source = "terraform-aws-modules/s3-bucket/aws"
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "~> 4.0"
 
   bucket = "${local.account_name}-${local.app}"
 

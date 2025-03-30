@@ -5,6 +5,8 @@
 ## Required Providers
 
 terraform {
+  required_version = ">= 1.3.0"
+
   required_providers {
     github = {
       source  = "integrations/github"
@@ -23,6 +25,7 @@ provider "github" {
 ## Inputs
 
 variable "owner" {
+  type        = string
   description = <<-EOT
     The owner of the repository. This can be a user or organization.
   EOT

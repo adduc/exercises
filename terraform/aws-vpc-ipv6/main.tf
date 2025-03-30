@@ -5,6 +5,8 @@
 # - RDS and ALB support dualstack IPv6, but do not support IPv6-only.
 ##
 
+## Providers
+
 provider "aws" {
   region = "us-east-2"
 
@@ -14,6 +16,21 @@ provider "aws" {
     }
   }
 }
+
+## Required Providers
+
+terraform {
+  required_version = ">= 1.3.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+## Resources
 
 data "aws_availability_zones" "available" {}
 
@@ -57,7 +74,8 @@ resource "aws_security_group" "rds" {
 }
 
 module "db" {
-  source = "terraform-aws-modules/rds/aws"
+  source  = "terraform-aws-modules/rds/aws"
+  version = "~> 6.0"
 
   identifier = "free-tier"
   db_name    = "free_tier_db"
@@ -98,6 +116,7 @@ module "db" {
 
 module "lb" {
   source             = "terraform-aws-modules/alb/aws"
+  version            = "~> 9.0"
   name               = "free-tier"
   load_balancer_type = "application"
 
