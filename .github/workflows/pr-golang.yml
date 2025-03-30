@@ -73,7 +73,7 @@ jobs:
 
       - name: Format
         run: |
-          FILES=$(gofmt -l -w . ${{ matrix.dir }})
+          FILES=$(gofmt -l -w ${{ matrix.dir }})
           if [ -n "$FILES" ]; then
             echo "The following files are not formatted correctly:"
             echo "$FILES"
