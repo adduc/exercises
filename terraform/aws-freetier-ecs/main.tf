@@ -15,6 +15,8 @@ locals {
 ## Required Providers
 
 terraform {
+  required_version = ">= 1.3.0"
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -65,7 +67,8 @@ module "vpc" {
 ##
 
 module "ecs" {
-  source = "terraform-aws-modules/ecs/aws"
+  source  = "terraform-aws-modules/ecs/aws"
+  version = "~> 5.0"
 
   # Cluster
   cluster_name = local.app
@@ -102,7 +105,8 @@ data "aws_ssm_parameter" "ecs_ami" {
 }
 
 module "autoscaling" {
-  source = "terraform-aws-modules/autoscaling/aws"
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "~> 8.0"
 
   name = local.app
 
@@ -188,7 +192,8 @@ resource "aws_vpc_security_group_ingress_rule" "all_ssh" {
 ##
 
 module "ecs_service" {
-  source = "terraform-aws-modules/ecs/aws//modules/service"
+  source  = "terraform-aws-modules/ecs/aws//modules/service"
+  version = "~> 5.0"
 
   name                     = local.app
   cluster_arn              = module.ecs.cluster_arn
@@ -245,7 +250,9 @@ module "ecs_service" {
 ##
 
 module "lb" {
-  source             = "terraform-aws-modules/alb/aws"
+  source  = "terraform-aws-modules/alb/aws"
+  version = "~> 9.0"
+
   name               = local.app
   load_balancer_type = "application"
 

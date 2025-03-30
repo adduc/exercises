@@ -7,6 +7,23 @@ variable "notification_email" {
   EOT
 }
 
+## Providers
+
+provider "aws" {}
+
+## Required Providers
+
+terraform {
+  required_version = ">= 1.3.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 ## Resources
 
 # @see https://us-east-1.console.aws.amazon.com/billing/home?region=us-east-1#/budgets/details?name=My%20Zero-Spend%20Budget

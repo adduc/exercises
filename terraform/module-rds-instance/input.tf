@@ -120,16 +120,6 @@ variable "skip_final_snapshot" {
 
 ## Optional Variables
 
-variable "description" {
-  type        = string
-  description = <<-EOT
-    The description of the RDS instance.
-  EOT
-
-  default  = null
-  nullable = true
-}
-
 variable "identifier" {
   type        = string
   description = <<-EOT

@@ -9,6 +9,8 @@ locals {
 ## Required Providers
 
 terraform {
+  required_version = ">= 1.3.0"
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -66,7 +68,8 @@ resource "aws_security_group" "rds" {
 }
 
 module "db" {
-  source = "terraform-aws-modules/rds/aws"
+  source  = "terraform-aws-modules/rds/aws"
+  version = "~> 6.0"
 
   identifier = local.app
   db_name    = local.app
