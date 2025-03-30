@@ -52,3 +52,37 @@ jobs:
         with:
           version: v2.0
           working-directory: ${{ matrix.dir }}
+
+  format:
+    name: Format
+    runs-on: ubuntu-24.04
+    needs: find
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJson(needs.find.outputs.dirs) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ matrix.dir }}/go.mod
+          cache-dependency-path: ${{ matrix.dir }}/go.sum
+
+      - name: Format
+        run: |
+          FILES=$(gofmt -l -w ${{ matrix.dir }})
+          if [ -n "$FILES" ]; then
+            echo "The following files are not formatted correctly:"
+            echo "$FILES"
+            echo "Please run 'gofmt -w ${{ matrix.dir }}' to format them."
+            echo ""
+            echo "::group::Diff of unformatted files"
+            git diff
+            echo "::endgroup::"
+            exit 1
+          fi
+
+    # @todo format all Go files, fail the PR if any require formatting
