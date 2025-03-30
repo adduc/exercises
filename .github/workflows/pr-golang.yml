@@ -77,7 +77,7 @@ jobs:
           if [ -n "$FILES" ]; then
             echo "The following files are not formatted correctly:"
             echo "$FILES"
-            echo "Please run 'gofmt -w .' to format them."
+            echo "Please run 'gofmt -w ${{ matrix.dir }}' to format them."
             echo ""
             echo "::group::Diff of unformatted files"
             git diff
