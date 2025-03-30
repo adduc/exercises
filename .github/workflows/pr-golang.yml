@@ -78,7 +78,7 @@ jobs:
             echo "The following files are not formatted correctly:"
             echo "$FILES"
             echo "Please run 'gofmt -w .' to format them."
-
+            echo ""
             echo "::group::Diff of unformatted files"
             git diff
             echo "::endgroup::"
