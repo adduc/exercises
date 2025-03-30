@@ -70,6 +70,10 @@ jobs:
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
         with: { terraform_version: "1.11.3" }
 
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6
+        with: { tflint_version: "v0.52.0" }
+
       - name: Validate Terraform
-        run: |
-          tflint --chdir ${{ matrix.dir }}
+        run: tflint --chdir ${{ matrix.dir }}
+
