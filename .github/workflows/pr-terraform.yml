@@ -1,11 +1,11 @@
-name: PR:Bash
+name: PR:Terraform
 
 on:
   pull_request:
     paths:
       # This workflow
-      - '.github/workflows/pr-bash.yml'
-      # Terraform scripts
+      - '.github/workflows/pr-terraform.yml'
+      # Terraform configuration
       - '**/*.tf'
 
 permissions:
