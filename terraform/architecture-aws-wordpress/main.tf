@@ -18,6 +18,17 @@ provider "aws" {
   }
 }
 
+terraform {
+  required_version = ">= 1.3.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 locals {
   app = "wordpress"
 }
@@ -57,7 +68,8 @@ resource "aws_security_group" "rds" {
 }
 
 module "db" {
-  source = "terraform-aws-modules/rds/aws"
+  source  = "terraform-aws-modules/rds/aws"
+  version = "~> 6.0"
 
   identifier = local.app
   db_name    = local.app
@@ -96,7 +108,8 @@ module "db" {
 ##
 
 module "cloudfront" {
-  source = "terraform-aws-modules/cloudfront/aws"
+  source  = "terraform-aws-modules/cloudfront/aws"
+  version = "~> 4.0"
 
   origin = {
     vpc_origin = {
@@ -141,7 +154,9 @@ data "aws_ec2_managed_prefix_list" "cloudfront" {
 ##
 
 module "lb" {
-  source                     = "terraform-aws-modules/alb/aws"
+  source  = "terraform-aws-modules/alb/aws"
+  version = "~> 9.0"
+
   name                       = local.app
   load_balancer_type         = "application"
   vpc_id                     = module.vpc.vpc_id
@@ -218,7 +233,8 @@ resource "aws_cloudfront_vpc_origin" "vpc_origin" {
 # @see https://registry.terraform.io/modules/terraform-aws-modules/ecs/aws/latest
 ##
 module "ecs" {
-  source = "terraform-aws-modules/ecs/aws"
+  source  = "terraform-aws-modules/ecs/aws"
+  version = "~> 5.0"
 
   # Cluster
   cluster_name = local.app
@@ -250,7 +266,8 @@ data "aws_ssm_parameter" "ecs_ami" {
 
 # @see https://github.com/terraform-aws-modules/terraform-aws-autoscaling
 module "autoscaling" {
-  source = "terraform-aws-modules/autoscaling/aws"
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "~> 8.0"
 
   name = local.app
 
@@ -326,7 +343,8 @@ resource "aws_vpc_security_group_egress_rule" "all_ipv6" {
 ##
 
 module "efs" {
-  source = "terraform-aws-modules/efs/aws"
+  source  = "terraform-aws-modules/efs/aws"
+  version = "~> 1.0"
 
   name                 = local.app
   enable_backup_policy = false
@@ -364,7 +382,8 @@ data "aws_secretsmanager_secret_version" "db_password" {
 }
 
 module "ecs_service" {
-  source = "terraform-aws-modules/ecs/aws//modules/service"
+  source  = "terraform-aws-modules/ecs/aws//modules/service"
+  version = "~> 5.0"
 
   name                               = local.app
   cluster_arn                        = module.ecs.cluster_arn
