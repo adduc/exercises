@@ -13,7 +13,7 @@ type Response struct {
 }
 
 func handler(request Request) (Response, error) {
-	println("Hello from handler!")
+println("Hello from handler!")
 	return Response{
 		Body:       "Hello, World!",
 		StatusCode: 200,
