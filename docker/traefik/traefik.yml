@@ -3,7 +3,7 @@
 ##
 # Traefik Static Configuration
 #
-# @see https://doc.traefik.io/traefk/reference/install-configuration/boot-environment/#file
+# @see https://doc.traefik.io/traefik/reference/install-configuration/boot-environment/#file
 ##
 # yamllint enable
 
