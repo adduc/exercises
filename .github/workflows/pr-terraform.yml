@@ -1,8 +1,7 @@
-%YAML 1.2
 ---
 name: PR:Terraform
 
-on:
+'on':
   pull_request:
     paths:
       # This workflow

@@ -1,14 +1,13 @@
-%YAML 1.2
 ---
 name: PR:Golang
 
-on:
+'on':
   pull_request:
     paths:
       # This workflow
       - '.github/workflows/pr-golang.yml'
       # Go files
-      - '**.go'
+      - '**/*.go'
       # Go dependencies
       - '**/go.*'
 

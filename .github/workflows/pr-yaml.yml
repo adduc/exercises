@@ -1,8 +1,7 @@
-%YAML 1.2
 ---
 name: PR:YAML
 
-on:
+'on':
   pull_request:
     paths:
       # This workflow
