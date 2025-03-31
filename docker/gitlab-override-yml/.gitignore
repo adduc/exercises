@@ -1,0 +1,11 @@
+# GitLab generated configuration
+config/
+
+# GitLab data (including repositories, uploads, builds, artifacts, etc.)
+data/
+
+# GitLab logs
+logs/
+
+# Environment configuration
+.env

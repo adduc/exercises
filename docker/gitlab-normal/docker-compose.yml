@@ -1,0 +1,40 @@
+services:
+  # @see https://docs.gitlab.com/install/docker/installation/#install-gitlab-by-using-docker-compose
+  gitlab:
+    image: gitlab/gitlab-ce:17.10.1-ce.0
+    container_name: gitlab
+    restart: unless-stopped
+    hostname: gitlab.127.0.0.1.nip.io
+    ports:
+      - "80:80"
+      - "443:443"
+      - "2222:22"
+    volumes:
+      - ./config/gitlab:/etc/gitlab
+      - ./logs/gitlab:/var/log/gitlab
+      - ./data/gitlab:/var/opt/gitlab
+
+    environment:
+      # @see https://docs.gitlab.com/install/docker/configuration/#pre-configure-docker-container
+      # @see https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/files/gitlab-config-template/gitlab.rb.template
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.127.0.0.1.nip.io';
+        gitlab_rails['initial_root_password'] = '${INITIAL_ROOT_PASSWORD}';
+        gitlab_rails['gitlab_default_theme'] = 11;
+        gitlab_rails['gitlab_default_color_mode'] = 2; # dark
+
+        # Disable features that are not needed
+        gitlab_rails['lfs_enabled'] = false;
+        gitlab_rails['terraform_state_enabled'] = false;
+        gitlab_rails['ci_secure_files_enabled'] = false;
+        gitlab_rails['usage_ping_enabled'] = false;
+        registry['enable'] = false;
+        gitlab_kas['enable'] = false;
+        prometheus['enable'] = false;
+        alertmanager['enable'] = false;
+        node_exporter['enable'] = false;
+        redis_exporter['enable'] = false;
+        postgres_exporter['enable'] = false;
+        gitlab_exporter['enable'] = false;
+        sentinel['enable'] = false;
+        gitlab_rails['kerberos_enabled'] = false;
