@@ -1,5 +1,6 @@
+---
 services:
-  # @see https://docs.gitlab.com/install/docker/installation/#install-gitlab-by-using-docker-compose
+  # @see https://docs.gitlab.com/install/docker/installation/
   gitlab:
     image: gitlab/gitlab-ce:17.10.1-ce.0
     container_name: gitlab

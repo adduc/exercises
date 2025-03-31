@@ -1,3 +1,5 @@
+%YAML 1.2
+---
 name: PR:YAML
 
 on:
@@ -10,7 +12,7 @@ on:
       - '**/*.yml'
 
 permissions:
-  contents: read # used by actions/checkout
+  contents: read  # used by actions/checkout
 
 jobs:
   lint:
@@ -21,9 +23,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Lint (YAML)
-        run: find \( -iname '*.yml' -or -iname '*.yaml' \) -print0 | xargs -0 yq --exit-status eval-all > /dev/null
+        run: |
+          find \( -iname '*.yml' -or -iname '*.yaml' \) -print0 \
+          | xargs -0 yq --exit-status eval-all > /dev/null
 
       # @todo consider setting up yamllint to anchor version, avoid surprises
 
       - name: yamllint
-        run: find \( -iname '*.yml' -or -iname '*.yaml' \) -print0 | xargs -0 yamllint
+        run: |
+          find \( -iname '*.yml' -or -iname '*.yaml' \) -print0 \
+          | xargs -0 yamllint
