@@ -1,0 +1,34 @@
+---
+name: PR:YAML
+
+'on':
+  pull_request:
+    paths:
+      # This workflow
+      - '.github/workflows/pr-yaml.yml'
+      # YAML files
+      - '**/*.yaml'
+      - '**/*.yml'
+
+permissions:
+  contents: read  # used by actions/checkout
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lint (YAML)
+        run: |
+          find \( -iname '*.yml' -or -iname '*.yaml' \) -print0 \
+          | xargs -0 yq --exit-status eval-all > /dev/null
+
+      # @todo consider setting up yamllint to anchor version, avoid surprises
+
+      - name: yamllint
+        run: |
+          find \( -iname '*.yml' -or -iname '*.yaml' \) -print0 \
+          | xargs -0 yamllint

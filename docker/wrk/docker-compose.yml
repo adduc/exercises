@@ -1,3 +1,4 @@
+---
 services:
   wrk:
     image: ghcr.io/william-yeh/wrk:4.2.0

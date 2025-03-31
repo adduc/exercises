@@ -1,8 +1,11 @@
+---
+# yamllint disable rule:line-length
 ##
 # Dynamic configuration for Traefik
 #
 # @see https://doc.traefik.io/traefik/reference/install-configuration/providers/others/file/
 ##
+# yamllint enable
 
 http:
   routers:

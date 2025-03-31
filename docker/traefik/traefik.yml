@@ -1,8 +1,11 @@
+---
+# yamllint disable rule:line-length
 ##
 # Traefik Static Configuration
 #
 # @see https://doc.traefik.io/traefik/reference/install-configuration/boot-environment/#file
 ##
+# yamllint enable
 
 # API Configuration
 

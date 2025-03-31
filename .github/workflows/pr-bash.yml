@@ -1,6 +1,7 @@
+---
 name: PR:Bash
 
-on:
+'on':
   pull_request:
     paths:
       # This workflow
@@ -9,7 +10,7 @@ on:
       - '**/*.sh'
 
 permissions:
-  contents: read # used by actions/checkout
+  contents: read  # used by actions/checkout
 
 jobs:
   lint:
@@ -21,7 +22,8 @@ jobs:
 
       - name: Setup ShellCheck
         uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
-        with: { version: v0.10.0 }
+        with:
+          version: v0.10.0
 
       - name: Lint (ShellCheck)
         run: find . -name '*.sh' -execdir shellcheck {} \;

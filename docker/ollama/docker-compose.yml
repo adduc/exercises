@@ -1,3 +1,4 @@
+---
 services:
   ollama:
     image: ollama/ollama:${IMAGE_TAG:?use latest if nvidia, rocm if amd}
