@@ -1,0 +1,22 @@
+# gitlab.rb tends to lag behind gitlab.yml's changes, resulting in
+# being unable to configure certain features. For example, theming
+# for dark mode was refactored into a second configuration setting in
+# gitlab.yml, but gitlab.rb does not support it yet. To avoid this,
+# we can maintain our own gitlab.yml.erb template to be used by GitLab
+# during startup.
+
+# @see https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/files/gitlab-cookbooks/gitlab/templates/default/gitlab.yml.erb
+# @see https://gitlab.com/gitlab-org/gitlab/-/blob/master/config/gitlab.yml.example
+
+production:
+  gitlab:
+    # Old dark mode (will probably be removed in the future)
+    default_theme: 11
+
+    # Dark mode: affects logged out users, but doesn't affect the
+    # root user's theme at the moment.
+    # @see https://forum.gitlab.com/t/dark-mode-for-non-logged-in-viewer/100953/3
+    default_color_mode: 2
+
+  repositories:
+    storages: <%= JSON.dump(@repositories_storages) %>

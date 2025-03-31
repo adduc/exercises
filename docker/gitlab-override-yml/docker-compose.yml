@@ -1,0 +1,23 @@
+services:
+  # @see https://docs.gitlab.com/install/docker/installation/#install-gitlab-by-using-docker-compose
+  gitlab:
+    image: gitlab/gitlab-ce:17.10.1-ce.0
+    container_name: gitlab
+    restart: unless-stopped
+    hostname: gitlab.127.0.0.1.nip.io
+    ports:
+      - "80:80"
+      - "443:443"
+      - "2222:22"
+    volumes:
+      - ./config/gitlab:/etc/gitlab
+      - ./logs/gitlab:/var/log/gitlab
+      - ./data/gitlab:/var/opt/gitlab
+      # Some gitlab.yml configuration files are not configurable
+      # through gitlab.rb. To mitigate this, we can define a custom
+      # gitlab.yml.erb template that will be processed by GitLab
+      # during the initialization process.
+      - ./gitlab.yml.erb:/opt/gitlab/embedded/cookbooks/gitlab/templates/default/gitlab.yml.erb:ro
+
+    environment:
+      GITLAB_ROOT_PASSWORD: ${INITIAL_ROOT_PASSWORD}
