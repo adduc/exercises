@@ -1,0 +1,14 @@
+# Example Justfile
+
+asdf := "a b"
+
+
+# This is a build command
+hello:
+    @echo -n "Hello "
+
+world: hello
+    @echo "World!"
+
+echo:
+    @echo "asdf: {{ asdf }}"
