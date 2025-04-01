@@ -8,7 +8,7 @@ import (
 )
 
 func Init(router *gin.Engine, authGroup *gin.RouterGroup) error {
-	repo, err := NewBookmarkRepository()
+	repo, err := GetBookmarkRepository()
 	if err != nil {
 		return err
 	}

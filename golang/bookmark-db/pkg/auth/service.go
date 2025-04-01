@@ -9,7 +9,7 @@ import (
 )
 
 func Init(router *gin.Engine, authGroup *gin.RouterGroup) error {
-	userRepo, err := NewUserRepository()
+	userRepo, err := GetUserRepository()
 	if err != nil {
 		return err
 	}

@@ -6,9 +6,19 @@ import (
 	"gorm.io/gorm"
 )
 
+var userRepository UserRepository
+
 func NewUserRepository() (UserRepository, error) {
 	db := databases.GetDefaultDB()
-	return &UserDBRepository{db: db}, nil
+	userRepository = &UserDBRepository{db: db}
+	return userRepository, nil
+}
+
+func GetUserRepository() (UserRepository, error) {
+	if userRepository == nil {
+		return NewUserRepository()
+	}
+	return userRepository, nil
 }
 
 type UserRepository interface {

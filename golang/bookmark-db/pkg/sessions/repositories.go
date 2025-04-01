@@ -6,12 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func Migrate() (*gorm.DB, error) {
-	return databases.GetDefaultDB(), databases.GetDefaultDB().AutoMigrate(
-		&models.Session{},
-	)
-}
-
 var sessionRepo SessionRepository
 
 func NewSessionRepository() (SessionRepository, error) {

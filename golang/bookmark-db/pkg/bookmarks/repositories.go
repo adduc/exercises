@@ -10,16 +10,27 @@ import (
 	"gorm.io/gorm"
 )
 
+var bookmarkRepository BookmarkRepository
+
 func NewBookmarkRepository() (BookmarkRepository, error) {
 	switch config.Config.DBType {
 	case "sqlite":
 		db := databases.GetDefaultDB()
-		return NewBookmarkDBRepository(db), nil
+		bookmarkRepository = NewBookmarkDBRepository(db)
 	case "memory":
-		return NewInMemoryBookmarkRepository(), nil
+		bookmarkRepository = NewInMemoryBookmarkRepository()
 	default:
 		return nil, errors.New("unsupported database type")
 	}
+
+	return bookmarkRepository, nil
+}
+
+func GetBookmarkRepository() (BookmarkRepository, error) {
+	if bookmarkRepository == nil {
+		return NewBookmarkRepository()
+	}
+	return bookmarkRepository, nil
 }
 
 type BookmarkRepository interface {
