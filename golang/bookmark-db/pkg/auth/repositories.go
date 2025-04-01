@@ -6,12 +6,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func initRepos() {
-	Repos.User = &UserDBRepository{db: databases.GetDefaultDB()}
-}
-
-var Repos struct {
-	User UserRepository
+func NewUserRepository() (UserRepository, error) {
+	db := databases.GetDefaultDB()
+	return &UserDBRepository{db: db}, nil
 }
 
 type UserRepository interface {

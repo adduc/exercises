@@ -8,7 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func LoadSession(c *gin.Context) {
+type SessionMiddleware struct {
+	Repo SessionRepository
+}
+
+func NewSessionMiddleware(repo SessionRepository) *SessionMiddleware {
+	return &SessionMiddleware{
+		Repo: repo,
+	}
+}
+
+func (sm *SessionMiddleware) LoadSession(c *gin.Context) {
 	sessionToken, err := c.Cookie(config.Config.SessionCookieName)
 
 	if err != nil {
@@ -16,7 +26,7 @@ func LoadSession(c *gin.Context) {
 		return
 	}
 
-	session, err := Repos.Session.GetSessionByToken(sessionToken)
+	session, err := sm.Repo.GetSessionByToken(sessionToken)
 
 	if err != nil {
 		_ = c.AbortWithError(http.StatusInternalServerError, err)
@@ -39,7 +49,7 @@ func LoadSession(c *gin.Context) {
 	c.Set("session", session)
 }
 
-func RequireSession(c *gin.Context) {
+func (sm *SessionMiddleware) RequireSession(c *gin.Context) {
 	session, exists := c.Get("session")
 	if !exists || session == nil {
 		c.SetCookie(config.Config.SessionCookieName, "", -1, "/", "", false, true)

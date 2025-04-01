@@ -18,11 +18,14 @@ func main() {
 	config.InitConfig()
 	migrate.Migrate()
 
-	router, authGroup := newRouter()
+	router, authGroup, err := newRouter()
+
+	if err != nil {
+		log.Fatalf("Failed to create router: %v", err)
+	}
 
 	auth.Init(router, authGroup)
 	if err := bookmarks.Init(router, authGroup); err != nil {
-
 		log.Fatalf("Failed to initialize bookmarks: %v", err)
 	}
 
@@ -30,22 +33,24 @@ func main() {
 		log.Fatalf("Failed to initialize landing: %v", err)
 	}
 
-	if err := sessions.Init(router, authGroup); err != nil {
-		log.Fatalf("Failed to initialize sessions: %v", err)
-	}
-
 	if err := router.Run(config.Config.ListenAddress); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
 
-func newRouter() (*gin.Engine, *gin.RouterGroup) {
+func newRouter() (*gin.Engine, *gin.RouterGroup, error) {
 	router := gin.Default()
 
 	templ := template.Must(template.New("").ParseFS(resources.F, "templates/*.html"))
 	router.SetHTMLTemplate(templ)
 
-	authGroup := router.Group("/", sessions.LoadSession, sessions.RequireSession)
+	sessionRepo, err := sessions.GetSessionRepository()
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return router, authGroup
+	sm := sessions.NewSessionMiddleware(sessionRepo)
+	authGroup := router.Group("/", sm.LoadSession, sm.RequireSession)
+
+	return router, authGroup, nil
 }

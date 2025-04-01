@@ -10,24 +10,39 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func initRoutes(router *gin.Engine, authGroup *gin.RouterGroup) {
-	registerRoutes(router)
-	registerAuthzRoutes(authGroup)
+type AuthController struct {
+	UserRepository    UserRepository
+	SessionRepository sessions.SessionRepository
 }
 
-func registerRoutes(e *gin.Engine) {
+func newAuthController(
+	userRepo UserRepository,
+	sessionRepo sessions.SessionRepository,
+) *AuthController {
+	return &AuthController{
+		UserRepository:    userRepo,
+		SessionRepository: sessionRepo,
+	}
+}
+
+func (ac *AuthController) RegisterRoutes(router *gin.Engine, authGroup *gin.RouterGroup) {
+	ac.registerRoutes(router)
+	ac.registerAuthzRoutes(authGroup)
+}
+
+func (ac *AuthController) registerRoutes(e *gin.Engine) {
 	// Register routes for authentication
-	e.GET("/register", Register)
-	e.POST("/register", RegisterPost)
-	e.GET("/login", Login)
-	e.POST("/login", LoginPost)
+	e.GET("/register", ac.Register)
+	e.POST("/register", ac.RegisterPost)
+	e.GET("/login", ac.Login)
+	e.POST("/login", ac.LoginPost)
 }
 
-func registerAuthzRoutes(e *gin.RouterGroup) {
-	e.GET("/logout", Logout)
+func (ac *AuthController) registerAuthzRoutes(e *gin.RouterGroup) {
+	e.GET("/logout", ac.Logout)
 }
 
-func Register(c *gin.Context) {
+func (ac *AuthController) Register(c *gin.Context) {
 	c.HTML(200, "register.html", gin.H{})
 }
 
@@ -37,14 +52,14 @@ type RegisterForm struct {
 	ConfirmPassword string `form:"confirm_password" binding:"required,eqfield=Password"`
 }
 
-func RegisterPost(c *gin.Context) {
+func (ac *AuthController) RegisterPost(c *gin.Context) {
 	var input RegisterForm
 	if err := c.ShouldBind(&input); err != nil {
 		c.HTML(400, "register.html", gin.H{"error": "Invalid input"})
 		return
 	}
 
-	existingUser, err := Repos.User.GetUserByUsername(input.Username)
+	existingUser, err := ac.UserRepository.GetUserByUsername(input.Username)
 	if err != nil {
 		c.HTML(500, "register.html", gin.H{"error": "Failed to check for existing user"})
 		return
@@ -60,14 +75,14 @@ func RegisterPost(c *gin.Context) {
 		return
 	}
 
-	if err := Repos.User.CreateUser(user); err != nil {
+	if err := ac.UserRepository.CreateUser(user); err != nil {
 		c.HTML(500, "register.html", gin.H{"error": "Failed to create user"})
 		return
 	}
 
 	session := sessionModels.NewSession(user)
 
-	if err := sessions.Repos.Session.CreateSession(session); err != nil {
+	if err := ac.SessionRepository.CreateSession(session); err != nil {
 		c.HTML(500, "register.html", gin.H{"error": "Failed to create session"})
 		return
 	}
@@ -76,7 +91,7 @@ func RegisterPost(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/dashboard")
 }
 
-func Login(c *gin.Context) {
+func (ac *AuthController) Login(c *gin.Context) {
 	c.HTML(200, "login.html", gin.H{})
 }
 
@@ -85,14 +100,14 @@ type LoginForm struct {
 	Password string `form:"password" binding:"required,min=8,max=128"`
 }
 
-func LoginPost(c *gin.Context) {
+func (ac *AuthController) LoginPost(c *gin.Context) {
 	var input LoginForm
 	if err := c.ShouldBind(&input); err != nil {
 		c.HTML(400, "login.html", gin.H{"error": "Invalid input"})
 		return
 	}
 
-	user, err := Repos.User.GetUserByUsername(input.Username)
+	user, err := ac.UserRepository.GetUserByUsername(input.Username)
 	if err != nil {
 		c.HTML(500, "login.html", gin.H{"error": "Failed to check for existing user"})
 		return
@@ -103,7 +118,7 @@ func LoginPost(c *gin.Context) {
 
 	session := sessionModels.NewSession(user)
 
-	if err := sessions.Repos.Session.CreateSession(session); err != nil {
+	if err := ac.SessionRepository.CreateSession(session); err != nil {
 		c.HTML(500, "login.html", gin.H{"error": "Failed to create session"})
 		return
 	}
@@ -112,10 +127,10 @@ func LoginPost(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/dashboard")
 }
 
-func Logout(c *gin.Context) {
+func (ac *AuthController) Logout(c *gin.Context) {
 	session := c.MustGet("session").(*sessionModels.Session)
 
-	if _, err := sessions.Repos.Session.DeleteSessionByToken(session.Token); err != nil {
+	if _, err := ac.SessionRepository.DeleteSessionByToken(session.Token); err != nil {
 		log.Printf("Failed to delete session: %v\n", err)
 		c.String(500, "An issue occurred while logging out; please try again")
 		return
