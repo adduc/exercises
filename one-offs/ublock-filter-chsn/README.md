@@ -5,7 +5,7 @@ This exercise demonstrates one way to fix browser crashes when watching CHSN gam
 ## Context
 
 I recently subscribed to CHSN to watch White Sox games, but when I
-attempted to watch the archived for a game, my browser crashed. I
+attempted to watch a game from the day before, my browser crashed. I
 experienced this both on Firefox and Chrome. After profiling the page
 during its initial load, I discovered that the CPU and memory usage was
 caused from an attempt to load and process 2,500+ thumbnails.
