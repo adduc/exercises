@@ -1,6 +1,9 @@
 package auth
 
 import (
+	"errors"
+
+	"github.com/adduc/exercises/golang/bookmark-db/internal/config"
 	"github.com/adduc/exercises/golang/bookmark-db/internal/databases"
 	"github.com/adduc/exercises/golang/bookmark-db/pkg/auth/models"
 	"gorm.io/gorm"
@@ -9,8 +12,13 @@ import (
 var userRepository UserRepository
 
 func NewUserRepository() (UserRepository, error) {
-	db := databases.GetDefaultDB()
-	userRepository = &UserDBRepository{db: db}
+	switch config.Config.DBType {
+	case "sqlite":
+		db := databases.GetDefaultDB()
+		userRepository = newUserDBRepository(db)
+	default:
+		return nil, errors.New("unsupported database type")
+	}
 	return userRepository, nil
 }
 
@@ -29,6 +37,10 @@ type UserRepository interface {
 
 type UserDBRepository struct {
 	db *gorm.DB
+}
+
+func newUserDBRepository(db *gorm.DB) *UserDBRepository {
+	return &UserDBRepository{db: db}
 }
 
 func (r *UserDBRepository) CreateUser(user *models.User) error {

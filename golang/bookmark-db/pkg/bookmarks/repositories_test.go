@@ -24,12 +24,12 @@ func setupTestDB() *gorm.DB {
 }
 
 func TestBookmarkDBRepository(t *testing.T) {
-	repo := NewBookmarkDBRepository(setupTestDB())
+	repo := newBookmarkDBRepository(setupTestDB())
 	testBookmarkRepository(t, repo)
 }
 
 func TestInMemoryBookmarkRepository(t *testing.T) {
-	repo := NewInMemoryBookmarkRepository()
+	repo := newInMemoryBookmarkRepository()
 	testBookmarkRepository(t, repo)
 }
 

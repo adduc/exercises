@@ -16,9 +16,9 @@ func NewBookmarkRepository() (BookmarkRepository, error) {
 	switch config.Config.DBType {
 	case "sqlite":
 		db := databases.GetDefaultDB()
-		bookmarkRepository = NewBookmarkDBRepository(db)
+		bookmarkRepository = newBookmarkDBRepository(db)
 	case "memory":
-		bookmarkRepository = NewInMemoryBookmarkRepository()
+		bookmarkRepository = newInMemoryBookmarkRepository()
 	default:
 		return nil, errors.New("unsupported database type")
 	}
@@ -45,7 +45,7 @@ type BookmarkDBRepository struct {
 	db *gorm.DB
 }
 
-func NewBookmarkDBRepository(db *gorm.DB) *BookmarkDBRepository {
+func newBookmarkDBRepository(db *gorm.DB) *BookmarkDBRepository {
 	return &BookmarkDBRepository{db: db}
 }
 
@@ -86,7 +86,7 @@ type InMemoryBookmarkRepository struct {
 	nextID    int
 }
 
-func NewInMemoryBookmarkRepository() *InMemoryBookmarkRepository {
+func newInMemoryBookmarkRepository() *InMemoryBookmarkRepository {
 	return &InMemoryBookmarkRepository{
 		bookmarks: make(map[int]*models.Bookmark),
 		nextID:    1,

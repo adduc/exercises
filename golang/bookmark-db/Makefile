@@ -35,4 +35,7 @@ watch: ## Watch for changes and run all binaries
 watch/server: ## Watch for changes and run the web server
 	gow -e=go,html,env -w . run cmd/server/main.go
 
+watch/test: ## Watch for changes and run tests
+	gow -e=go -w . test ./... -v
+
 # @todo implement "bootstrap"
