@@ -1,0 +1,35 @@
+---
+##
+# Github Actions does not have a way to indicate that all status checks
+# should be required before a pull request can be merged, except by
+# explicitly listing them in the `required_status_checks` of the branch
+# protection rule. To work within these limits, we can standardize the
+# naming of our lint and format jobs for various workflows and use a
+# placeholder job for situations where no other workflows execute (e.g.
+# for deep dive exercises with no associated code).
+##
+
+name: PR:Placeholder
+
+'on':
+  pull_request:
+
+permissions:
+  contents: read  # used by actions/checkout
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Lint Placeholder
+        run: |-
+          echo "This is a placeholder job to pass required CI checks"
+          exit 0
+
+  format:
+    name: Format
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Format Placeholder
+        run: |-
+          echo "This is a placeholder job to pass required CI checks"
+          exit 0
