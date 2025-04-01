@@ -5,8 +5,10 @@ it to [make][] and [task][]
 
 ## Context
 
-`make` has been my preferred command runner for many years. While it remains reliable
-am still happy with it, a colleague proposed a few alternatives, including just. This is an exploration of its features and usability.
+`make` has been my preferred command runner for many years. While it
+remains reliable, I am still happy with it, a colleague proposed a few
+alternatives, including `just`. This is an exploration of its features
+and usability.
 
 ## Initial Impressions
 
@@ -21,26 +23,28 @@ Here are some of the things I liked about Just:
   and want to run a command.
 - Shebang (`#!`) recipes provide a convenient way to write bash scripts
   without the need to escape multiple lines. They are also ideal for including one-off scripts, such as those I often write in PHP.
-- Just has built-in support to list all defined recipes, including the
+- `just` has built-in support to list all defined recipes, including the
   comment prior to the recipe.
 
 **Cons**:
 
 Despite its strengths, `just` has some limitations worth noting.
 
-- The tool's name is challenging to search for online. Both just and
-  make are common terms, but make has decades of backlinks that make it easier to find relevant results, while just is new and faces an uphill battle.
-- Just lacks built-in support for executing recipes in parallel,
+- The tool's name is challenging to search for online. Both `just` and
+  `make` are common terms, but make has decades of backlinks that make
+  it easier to find relevant results, while `just` is new and faces an
+  uphill battle.
+- `just` lacks built-in support for executing recipes in parallel,
   instead relying on external tools like GNU parallel or xargs. This is
   a notable limitation, as GNU parallel, xargs, and other solutions
-  don't have the context Just and Make have.
-- Lack of dynamic recipes (variables sort of get you there)
-- Lack of autocomplete for recipe parameters
+  don't have the context `just` and `make` have.
+- `just` lacks support for dynamic recipes (variables sort of get you there)
+- `just` lacks support for autocompleting recipe parameters
 - Options are positional (interpreted before recipe name, not after)
 - The syntax for multiline recipe comments can be awkward if you want
   them to display in the help text.
-- Lack of support for conditional recipe execution, where make is
-  file-based and task can be explicitly configured commands to run to
+- `just` lacks support for conditional recipe execution, where `make` is
+  file-based and `task` can be explicitly configured commands to run to
   determine whether the recipe should execute.
 
 ## Final Thoughts
