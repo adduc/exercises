@@ -1,24 +1,20 @@
+---
 # https://taskfile.dev
 
 version: '3'
 
 tasks:
   build:
-    desc: Build all docker image variants
+    desc: Build all variants
     cmds:
-      - echo "Building all docker image variants..."
+      - echo "Building all variants..."
 
   build-arch-*:
-    desc: Build all docker image variants for a specific architecture
+    desc: Build all variants for a specific architecture
     cmds:
-      - echo 'Building all docker image variants for architecture {{index .MATCH 0}}'
+      - echo 'Building all variants for architecture {{index .MATCH 0}}'
 
   build-version-*:
-    desc: Build all docker image variants for a specific version
+    desc: Build all variants for a specific version
     cmds:
-      - echo 'Building all docker image variants for version {{index .MATCH 0}}'
-
-  build-arch-*-version-*:
-    desc: Build all docker image variants for a specific architecture and version
-    cmds:
-      - echo 'Building all docker image variants for architecture {{index .MATCH 0}} and version {{index .MATCH 1}}'
+      - echo 'Building all variants for version {{index .MATCH 0}}'
