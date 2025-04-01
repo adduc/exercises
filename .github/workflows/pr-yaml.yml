@@ -32,3 +32,12 @@ jobs:
         run: |
           find \( -iname '*.yml' -or -iname '*.yaml' \) -print0 \
           | xargs -0 yamllint
+
+  format:
+    name: Format
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Placeholder
+        run: |-
+          echo "This is a placeholder job, since we do not have a YAML formatter set up."
+          exit 1
