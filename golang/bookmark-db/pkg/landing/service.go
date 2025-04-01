@@ -5,7 +5,7 @@ import (
 )
 
 func Init(router *gin.Engine, authGroup *gin.RouterGroup) error {
-	initRoutes(router, authGroup)
-
+	c := newLandingController()
+	c.RegisterRoutes(router, authGroup)
 	return nil
 }
