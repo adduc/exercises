@@ -35,4 +35,9 @@ resource "github_branch_protection" "default" {
   required_pull_request_reviews {
     required_approving_review_count = 0
   }
+
+  required_status_checks {
+    strict   = false
+    contexts = ["Format", "Lint"]
+  }
 }
