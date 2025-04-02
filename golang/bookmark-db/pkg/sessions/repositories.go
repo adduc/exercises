@@ -6,18 +6,19 @@ import (
 	"gorm.io/gorm"
 )
 
-func initRepos() {
-	Repos.Session = &SessionDBRepository{db: databases.GetDefaultDB()}
+var sessionRepo SessionRepository
+
+func NewSessionRepository() (SessionRepository, error) {
+	db := databases.GetDefaultDB()
+	sessionRepo = &SessionDBRepository{db: db}
+	return sessionRepo, nil
 }
 
-func Migrate() (*gorm.DB, error) {
-	return databases.GetDefaultDB(), databases.GetDefaultDB().AutoMigrate(
-		&models.Session{},
-	)
-}
-
-var Repos struct {
-	Session SessionRepository
+func GetSessionRepository() (SessionRepository, error) {
+	if sessionRepo == nil {
+		return NewSessionRepository()
+	}
+	return sessionRepo, nil
 }
 
 type SessionRepository interface {

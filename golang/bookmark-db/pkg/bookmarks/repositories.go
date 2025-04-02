@@ -10,16 +10,27 @@ import (
 	"gorm.io/gorm"
 )
 
+var bookmarkRepository BookmarkRepository
+
 func NewBookmarkRepository() (BookmarkRepository, error) {
 	switch config.Config.DBType {
 	case "sqlite":
 		db := databases.GetDefaultDB()
-		return NewBookmarkDBRepository(db), nil
+		bookmarkRepository = newBookmarkDBRepository(db)
 	case "memory":
-		return NewInMemoryBookmarkRepository(), nil
+		bookmarkRepository = newInMemoryBookmarkRepository()
 	default:
 		return nil, errors.New("unsupported database type")
 	}
+
+	return bookmarkRepository, nil
+}
+
+func GetBookmarkRepository() (BookmarkRepository, error) {
+	if bookmarkRepository == nil {
+		return NewBookmarkRepository()
+	}
+	return bookmarkRepository, nil
 }
 
 type BookmarkRepository interface {
@@ -34,7 +45,7 @@ type BookmarkDBRepository struct {
 	db *gorm.DB
 }
 
-func NewBookmarkDBRepository(db *gorm.DB) *BookmarkDBRepository {
+func newBookmarkDBRepository(db *gorm.DB) *BookmarkDBRepository {
 	return &BookmarkDBRepository{db: db}
 }
 
@@ -75,7 +86,7 @@ type InMemoryBookmarkRepository struct {
 	nextID    int
 }
 
-func NewInMemoryBookmarkRepository() *InMemoryBookmarkRepository {
+func newInMemoryBookmarkRepository() *InMemoryBookmarkRepository {
 	return &InMemoryBookmarkRepository{
 		bookmarks: make(map[int]*models.Bookmark),
 		nextID:    1,
