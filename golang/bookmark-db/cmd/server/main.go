@@ -24,7 +24,10 @@ func main() {
 		log.Fatalf("Failed to create router: %v", err)
 	}
 
-	auth.Init(router, authGroup)
+	if err := auth.Init(router, authGroup); err != nil {
+		log.Fatalf("Failed to initialize auth: %v", err)
+	}
+
 	if err := bookmarks.Init(router, authGroup); err != nil {
 		log.Fatalf("Failed to initialize bookmarks: %v", err)
 	}
