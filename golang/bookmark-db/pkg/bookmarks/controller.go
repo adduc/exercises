@@ -54,13 +54,12 @@ func (bc *BookmarkController) CreateBookmark(c *gin.Context) {
 	c.HTML(200, "bookmarks.create.html", gin.H{})
 }
 
-type CreateBookmarkInput struct {
-	URL  string `form:"url" binding:"required,url"`
-	Note string `form:"note" binding:"max=1024"`
-}
-
 func (bc *BookmarkController) CreateBookmarkPost(c *gin.Context) {
-	var input CreateBookmarkInput
+	var input struct {
+		URL  string `form:"url" binding:"required,url"`
+		Note string `form:"note" binding:"max=1024"`
+	}
+
 	if err := c.ShouldBind(&input); err != nil {
 		c.HTML(400, "bookmarks.create.html", gin.H{"error": "Invalid input"})
 		return
@@ -111,11 +110,6 @@ func (bc *BookmarkController) EditBookmark(c *gin.Context) {
 	})
 }
 
-type EditBookmarkInput struct {
-	URL  string `form:"url" binding:"required,url"`
-	Note string `form:"note" binding:"max=1024"`
-}
-
 func (bc *BookmarkController) EditBookmarkPost(c *gin.Context) {
 	var uri BookmarkURI
 	if err := c.ShouldBindUri(&uri); err != nil {
@@ -136,7 +130,10 @@ func (bc *BookmarkController) EditBookmarkPost(c *gin.Context) {
 		return
 	}
 
-	var input EditBookmarkInput
+	var input struct {
+		URL  string `form:"url" binding:"required,url"`
+		Note string `form:"note" binding:"max=1024"`
+	}
 
 	if err := c.ShouldBind(&input); err != nil {
 		c.HTML(400, "bookmarks.edit.html", gin.H{

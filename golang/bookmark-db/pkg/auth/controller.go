@@ -46,14 +46,13 @@ func (ac *AuthController) Register(c *gin.Context) {
 	c.HTML(200, "register.html", gin.H{})
 }
 
-type RegisterForm struct {
-	Username        string `form:"username" binding:"required,min=3,max=24"`
-	Password        string `form:"password" binding:"required,min=8,max=128"`
-	ConfirmPassword string `form:"confirm_password" binding:"required,eqfield=Password"`
-}
-
 func (ac *AuthController) RegisterPost(c *gin.Context) {
-	var input RegisterForm
+	var input struct {
+		Username        string `form:"username" binding:"required,min=3,max=24"`
+		Password        string `form:"password" binding:"required,min=8,max=128"`
+		ConfirmPassword string `form:"confirm_password" binding:"required,eqfield=Password"`
+	}
+
 	if err := c.ShouldBind(&input); err != nil {
 		c.HTML(400, "register.html", gin.H{"error": "Invalid input"})
 		return
@@ -95,13 +94,12 @@ func (ac *AuthController) Login(c *gin.Context) {
 	c.HTML(200, "login.html", gin.H{})
 }
 
-type LoginForm struct {
-	Username string `form:"username" binding:"required,min=3,max=24"`
-	Password string `form:"password" binding:"required,min=8,max=128"`
-}
-
 func (ac *AuthController) LoginPost(c *gin.Context) {
-	var input LoginForm
+	var input struct {
+		Username string `form:"username" binding:"required,min=3,max=24"`
+		Password string `form:"password" binding:"required,min=8,max=128"`
+	}
+
 	if err := c.ShouldBind(&input); err != nil {
 		c.HTML(400, "login.html", gin.H{"error": "Invalid input"})
 		return
