@@ -1,4 +1,4 @@
-# Provisioning GitLab using Helm
+# Provisioning GitLab using Helm (through Terraform)
 
 This exercise shows how GitLab can be provisioned using Helm on a Kubernetes cluster. This approach allows for greater configurability compared to the traditional omnibus docker image.
 
