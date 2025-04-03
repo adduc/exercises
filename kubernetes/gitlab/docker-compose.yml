@@ -17,8 +17,7 @@ services:
       - .:/output
     ports:
       - 6443:6443  # Kubernetes API Server
-      - 80:30080   # Nginx Gateway Fabric
-      - 30080:30080
+      - 80:30080   # GitLab
     command:
       - server
       - --disable=metrics-server
