@@ -25,12 +25,11 @@ jobs:
         with:
           php-version: '8.4'
           extensions: none
+          tools: none
 
       - name: Lint (PHP)
         run: |
-          php -v
-
           find -iname '*.php' -print0 \
-          | xargs -L200 -P$(nproc) -0 php -l
+          | xargs -i -L200 -P$(nproc) -0 php -l
 
       # @todo consider setting up PHP CodeSniffer for better checks
