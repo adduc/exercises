@@ -1,4 +1,4 @@
-# Deep Dive: Laravel Authentication
+# Notes: Laravel Authentication
 
 I wrote this document while diving through Laravel's authentication components in an attempt to understand what is provided out-of-box and what extensibility options are available. I've tried to document my thoughts between code snippets from Laravel's source code.
 
