@@ -29,6 +29,8 @@ variable "gitlab_chart_version" {
 ## Required Providers
 
 terraform {
+  required_version = ">= 1.3.0"
+
   required_providers {
     helm = {
       source  = "hashicorp/helm"
