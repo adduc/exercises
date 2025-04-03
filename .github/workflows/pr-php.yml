@@ -1,0 +1,35 @@
+---
+name: PR:PHP
+
+'on':
+  pull_request:
+    paths:
+      # This workflow
+      - '.github/workflows/pr-php.yml'
+      # PHP files
+      - '**/*.php'
+
+permissions:
+  contents: read  # used by actions/checkout
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@9e72090525849c5e82e596468b86eb55e9cc5401
+        with:
+          php-version: '8.4'
+          extensions: none
+          tools: none
+
+      - name: Lint (PHP)
+        run: |
+          find -iname '*.php' -print0 \
+          | xargs -L200 -P$(nproc) -0 php -l
+
+      # @todo consider setting up PHP CodeSniffer for better checks
