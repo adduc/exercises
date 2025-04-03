@@ -30,6 +30,6 @@ jobs:
       - name: Lint (PHP)
         run: |
           find -iname '*.php' -print0 \
-          | xargs -t -L200 -P$(nproc) -0 php -l
+          | xargs -L200 -P$(nproc) -0 php -l
 
       # @todo consider setting up PHP CodeSniffer for better checks
