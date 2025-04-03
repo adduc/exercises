@@ -27,6 +27,8 @@ jobs:
 
       - name: Lint (PHP)
         run: |
+          php -v
+
           find -iname '*.php' -print0 \
           | xargs -L200 -P$(nproc) -0 php -l
 
