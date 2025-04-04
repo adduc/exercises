@@ -31,6 +31,9 @@ kubectl --kubeconfig kubeconfig.yaml get nodes
 ```bash
 terraform init
 terraform apply
+
+# Set dark theme for root user in GitLab (optional)
+make gitlab/set-root-theme
 ```
 
 ## Accessing GitLab
