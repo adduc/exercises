@@ -3,6 +3,9 @@
 stages:
   - hello
 
+default:
+  image: alpine:3.21
+
 hello-world:
   stage: hello
   script:
