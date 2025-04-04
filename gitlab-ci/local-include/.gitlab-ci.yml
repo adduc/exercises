@@ -1,0 +1,14 @@
+# Create a GitLab CI configuration file that echos hello world for
+# PRs that modify this file.
+stages:
+  - hello
+
+hello-world:
+  stage: hello
+  script:
+    - echo "Hello, World!"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - gitlab-ci/local-include/.gitlab-ci.yml
+
