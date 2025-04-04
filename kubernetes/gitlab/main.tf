@@ -186,6 +186,7 @@ resource "helm_release" "gitlab" {
           hostKeys = {
             secret = yamldecode(kubectl_manifest.gitlab_shell_host_keys.yaml_body)["metadata"]["name"]
           }
+          port = 2222
         }
       }
 
@@ -198,7 +199,8 @@ resource "helm_release" "gitlab" {
           service = {
             type = "NodePort"
             nodePorts = {
-              http = 30080
+              http         = 30080
+              gitlab-shell = 30022
             }
             enableHttps = false
           }
