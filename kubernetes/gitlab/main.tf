@@ -26,6 +26,30 @@ variable "gitlab_chart_version" {
   default = "8.10.3"
 }
 
+variable "ssh_host_ecdsa_key" { type = string }
+variable "ssh_host_ecdsa_key_pub" { type = string }
+variable "ssh_host_ed25519_key" { type = string }
+variable "ssh_host_ed25519_key_pub" { type = string }
+variable "ssh_host_rsa_key" { type = string }
+variable "ssh_host_rsa_key_pub" { type = string }
+
+variable "root_personal_access_token" { type = string }
+
+## Outputs
+
+output "root_personal_access_token" {
+  value       = var.root_personal_access_token
+  sensitive   = true
+  description = <<-EOT
+    Token to use for the root user in GitLab after initial deployment.
+
+    Terraform will not automatically configure this token for you. You
+    will need to manually run `make gitlab/create-root-personal-access-token`
+    to create the preseeded personal access token for the root user in
+    GitLab.
+  EOT
+}
+
 ## Required Providers
 
 terraform {
@@ -76,11 +100,36 @@ resource "kubectl_manifest" "initial_root_password" {
     kind       = "Secret"
     metadata = {
       name      = "gitlab-initial-root-password"
-      namespace = "gitlab"
+      namespace = yamldecode(kubectl_manifest.gitlab_namespace.yaml_body)["metadata"]["name"]
     }
     type = "Opaque"
     data = {
       password = base64encode(var.initial_root_password)
+    }
+  })
+
+  depends_on = [
+    kubectl_manifest.gitlab_namespace
+  ]
+}
+
+resource "kubectl_manifest" "gitlab_shell_host_keys" {
+  # This is required for GitLab Shell to work properly
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "Secret"
+    metadata = {
+      name      = "gitlab-shell-host-keys"
+      namespace = yamldecode(kubectl_manifest.gitlab_namespace.yaml_body)["metadata"]["name"]
+    }
+    type = "Opaque"
+    data = {
+      "ssh_host_ecdsa_key"       = base64encode(var.ssh_host_ecdsa_key)
+      "ssh_host_ecdsa_key.pub"   = base64encode(var.ssh_host_ecdsa_key_pub)
+      "ssh_host_ed25519_key"     = base64encode(var.ssh_host_ed25519_key)
+      "ssh_host_ed25519_key.pub" = base64encode(var.ssh_host_ed25519_key_pub)
+      "ssh_host_rsa_key"         = base64encode(var.ssh_host_rsa_key)
+      "ssh_host_rsa_key.pub"     = base64encode(var.ssh_host_rsa_key_pub)
     }
   })
 
@@ -94,7 +143,7 @@ resource "helm_release" "gitlab" {
   repository = "https://charts.gitlab.io"
   chart      = "gitlab"
   version    = var.gitlab_chart_version
-  namespace  = "gitlab"
+  namespace  = yamldecode(kubectl_manifest.gitlab_namespace.yaml_body)["metadata"]["name"]
 
   values = [
     # @see https://gitlab.com/gitlab-org/charts/gitlab/-/blob/master/values.yaml
@@ -116,7 +165,7 @@ resource "helm_release" "gitlab" {
         }
 
         initialRootPassword = {
-          secret = "gitlab-initial-root-password"
+          secret = yamldecode(kubectl_manifest.initial_root_password.yaml_body)["metadata"]["name"]
           key    = "password"
         }
 
@@ -132,6 +181,13 @@ resource "helm_release" "gitlab" {
             signupEnabled = false
           }
         }
+
+        shell = {
+          hostKeys = {
+            secret = yamldecode(kubectl_manifest.gitlab_shell_host_keys.yaml_body)["metadata"]["name"]
+          }
+          port = 2222
+        }
       }
 
       certmanager = {
@@ -143,16 +199,13 @@ resource "helm_release" "gitlab" {
           service = {
             type = "NodePort"
             nodePorts = {
-              http = 30080
+              http         = 30080
+              gitlab-shell = 30022
             }
             enableHttps = false
           }
         }
       }
     })
-  ]
-
-  depends_on = [
-    kubectl_manifest.initial_root_password
   ]
 }

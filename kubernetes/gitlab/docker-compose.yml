@@ -18,6 +18,7 @@ services:
     ports:
       - 6443:6443  # Kubernetes API Server
       - 80:30080   # GitLab
+      - 2222:30022 # SSH (for GitLab, if needed)
     command:
       - server
       - --disable=metrics-server
