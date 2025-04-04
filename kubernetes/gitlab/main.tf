@@ -98,6 +98,7 @@ resource "helm_release" "gitlab" {
 
   values = [
     # @see https://gitlab.com/gitlab-org/charts/gitlab/-/blob/master/values.yaml
+    # @see https://docs.gitlab.com/charts/charts/globals/#general-application-settings
     yamlencode({
       global = {
         edition = "ce"
@@ -117,6 +118,19 @@ resource "helm_release" "gitlab" {
         initialRootPassword = {
           secret = "gitlab-initial-root-password"
           key    = "password"
+        }
+
+        appConfig = {
+          defaultTheme                   = 11
+          defaultColorMode               = 2 # Dark
+          defaultSyntaxHighlightingTheme = 2 # Dark
+
+          enableUsagePing = false
+          enableSeatLink  = false
+
+          initialDefaults = {
+            signupEnabled = false
+          }
         }
       }
 
