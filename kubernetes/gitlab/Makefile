@@ -12,6 +12,9 @@ gitlab/recreate: ## Recreate the GitLab instance, useful for resetting the envir
 	terraform apply -auto-approve
 
 	$(MAKE) gitlab/set-root-theme
+	$(MAKE) gitlab/create-root-personal-access-token
+	$(MAKE) gitlab/trust-ssh-key
+	@echo "GitLab instance recreated successfully."
 
 gitlab/set-root-theme: ## Set the GitLab root user theme (dark mode where possible)
 	@echo "Setting GitLab root user theme..."
@@ -24,11 +27,11 @@ gitlab/set-root-theme: ## Set the GitLab root user theme (dark mode where possib
 gitlab/create-root-personal-access-token: ## Create a Personal Access Token for the GitLab root user
 	@echo "Creating a new GitLab Personal Access Token for the root user..."
 
-	echo "puts User.find_by(username: 'root').personal_access_tokens.create(name: 'token', scopes: ['api'], expires_at: 1.year.from_now).token" \
-		| kubectl --kubeconfig=kubeconfig.yaml -n gitlab exec -i -c toolbox deployment.apps/gitlab-toolbox -- gitlab-rails runner - \
-		> root_access_token.txt
+	TOKEN=$$(terraform output -raw root_personal_access_token) \
+	&& echo "User.find_by(username: 'root').personal_access_tokens.create(name: 'preseed', scopes: ['api'], expires_at: 1.year.from_now, token_digest: Gitlab::CryptoHelper.sha256('$$TOKEN'))" \
+		| kubectl --kubeconfig=kubeconfig.yaml -n gitlab exec -i -c toolbox deployment.apps/gitlab-toolbox -- gitlab-rails runner -
 
-	@echo "Personal Access Token created and saved to root_access_token.txt"
+	@echo "Personal Access Token created"
 
 gitlab/trust-ssh-key: ## Trust the SSH key for the GitLab instance by adding it to the authorized keys
 	@echo "Trusting SSH key for GitLab..."
