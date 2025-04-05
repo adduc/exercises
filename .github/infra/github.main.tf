@@ -4,6 +4,19 @@ provider "github" {
   owner = "adduc"
 }
 
+## Required Providers
+
+terraform {
+  required_version = ">= 1.3.0"
+
+  required_providers {
+    github = {
+      source  = "integrations/github"
+      version = "~> 6.0"
+    }
+  }
+}
+
 ## Imports
 
 import {
