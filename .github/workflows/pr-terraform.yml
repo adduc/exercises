@@ -25,7 +25,10 @@ jobs:
       - name: Find main.tf files
         id: find
         run: |
-          DIRS=$(find . -name main.tf -exec dirname {} \; | jq -cR '[inputs]')
+          DIRS=$( \
+            find . -name '*main.tf' -exec dirname {} \; \
+            | jq -cR '[inputs]' \
+          )
           echo "dirs=$DIRS" >> $GITHUB_OUTPUT
 
   format:
