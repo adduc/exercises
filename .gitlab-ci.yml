@@ -1,0 +1,3 @@
+---
+include:
+  - local: 'gitlab-ci/local-include/local-include.gitlab-ci.yml'
