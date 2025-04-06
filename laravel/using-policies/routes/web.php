@@ -13,4 +13,10 @@ Route::post('/logout', [C\AuthController::class, 'logout'])->name('logout');
 
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
+
+    Route::get('/bookmarks/{bookmark}/delete', [C\BookmarkController::class, 'delete'])
+        ->name('bookmarks.delete');
+
+    Route::resource('bookmarks', C\BookmarkController::class)
+        ->except(['show']);
 });
