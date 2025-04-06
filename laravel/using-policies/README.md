@@ -1,12 +1,13 @@
-# Simple Authentication Example using Laravel
+# Using policies in Laravel
 
-This exercise shows how a simple authentication system can be
-implemented in Laravel without the use of any packages. It covers the
-basics of user registration, login, and logout functionalities.
+This exercise shows how policies can be used in a Laravel application to authorize user actions on models.
 
 ## Context
 
-While Laravel offers multiple solutions to bake authentication into
-your application (like Laravel Breeze, Jetstream, etc.), I wanted as
-simple a solution as possible to understand how authentication works
-under the hood.
+I am working on a Laravel application with user-specific ownership of resources. While I have implement authorization in Laravel codebases in the past, they were typically done through role-based access control or hard-coded checks in controller actions.
+
+## Lessons Learned
+
+There are multiple overlapping solutions for authorization within Laravel, and it is important to establish a clear strategy for development teams to follow. Otherwise, it can lead to confusion and inconsistencies in the codebase. For example, FormRequests have their own authorization methods, Gates can be used for quick checks, and Policies can be used for more complex model-based authorization.
+
+In my opinion, Policies and Gates can be used in complementary ways. Gates are great for actions (does user have access to a report, to perform an export, etc.), while Policies are more suited for typical CRUD operations on models. This allows for a clear separation of concerns, where Gates handle more granular permissions and Policies handle broader model-based permissions.
