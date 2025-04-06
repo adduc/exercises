@@ -1,3 +1,4 @@
+---
 # Create a GitLab CI configuration file that echos hello world for
 # PRs that modify this file.
 stages:
