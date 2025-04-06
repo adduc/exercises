@@ -15,4 +15,3 @@ hello-world:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - gitlab-ci/local-include/.gitlab-ci.yml
-
