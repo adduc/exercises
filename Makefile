@@ -26,3 +26,11 @@ php-lint-serial: ## Lint all PHP exercises (in serial)
 	@echo "Linting all PHP exercises (in serial)..."
 	@find $(FIND_EXCLUDE) -name '*.php' -print0 | \
 		xargs -0 -L200 -t -P1 php -l
+
+## CI Recipes
+
+ACT_CMD = act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:full-24.04
+
+ci/act/pr-terraform: ## Run Terraform PR checks using act
+	@echo "Running Terraform PR checks using act..."
+	@$(ACT_CMD) pull_request -W .github/workflows/pr-terraform.yml
