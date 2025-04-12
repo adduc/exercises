@@ -5,9 +5,9 @@ name: GitHub Action Symlink Example
   push:
     paths:
       # Workflows for this exercise
-      - '.github/workflows/github-action-symlink-*'
+      - '.github/workflows/github-action-symlink-example.yml'
       # Files for this exercise
-      - 'github-action-symlink/**'
+      - 'github-action/symlink/**'
 
 jobs:
   build:
