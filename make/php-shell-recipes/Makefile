@@ -1,8 +1,8 @@
 #!/usr/bin/make -f
 
 .ONESHELL:
-SHELL = /usr/bin/php
-.SHELLFLAGS = -r
+SHELL = /usr/bin/env
+.SHELLFLAGS = php -r
 
 example:
 	@// include '@' to suppress Make from echoing this script
