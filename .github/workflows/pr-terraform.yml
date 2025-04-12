@@ -50,7 +50,9 @@ jobs:
 
       - name: Format Terraform
         run: |
-          DIFF=$(terraform fmt diff -recursive ${{ matrix.dir }})
+          set -o pipefail -o errexit -o nounset
+
+          DIFF=$(terraform fmt -diff -recursive ${{ matrix.dir }})
           if [ -n "$DIFF" ]; then
             echo "At least one Terraform file is not formatted correctly:"
             echo "$DIFF"
