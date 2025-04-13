@@ -1,11 +1,11 @@
 ---
-name: GitHub Action Symlink Example
+name: "Example: Symlink"
 
 'on':
   push:
     paths:
       # Workflows for this exercise
-      - '.github/workflows/github-action-symlink-example.yml'
+      - '.github/workflows/example-symlink.yml'
       # Files for this exercise
       - 'github-action/symlink/**'
 
