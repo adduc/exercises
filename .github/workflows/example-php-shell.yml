@@ -1,0 +1,18 @@
+---
+name: "Example: PHP Shell"
+
+'on':
+  pull_request:
+    paths:
+      # Workflows for this exercise
+      - '.github/workflows/example-php-shell.yml'
+
+jobs:
+  php:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Shell test
+        shell: /usr/bin/env php {0}
+        run: |-
+          <?php
+          echo "Hello from PHP!\n";
