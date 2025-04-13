@@ -5,7 +5,7 @@ name: "Example: PHP Shell"
   pull_request:
     paths:
       # Workflows for this exercise
-      - '.github/workflows/example-php.yml'
+      - '.github/workflows/example-php-shell.yml'
 
 jobs:
   php:
