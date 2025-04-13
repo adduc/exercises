@@ -1,0 +1,34 @@
+---
+name: "Example: Print Contexts"
+
+'on':
+  workflow_dispatch:
+  pull_request:
+    paths:
+      # Workflows for this exercise
+      - '.github/workflows/example-print-contexts.yml'
+
+jobs:
+  contexts:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Print GitHub Context
+        run: echo '${{ toJSON(github) }}'
+      - name: Print Vars Context
+        run: echo '${{ toJSON(vars) }}'
+      - name: Print Job Context
+        run: echo '${{ toJSON(job) }}'
+      - name: Print Steps Context
+        run: echo '${{ toJSON(steps) }}'
+      - name: Print Runner Context
+        run: echo '${{ toJSON(runner) }}'
+      - name: Print Secrets Context
+        run: echo '${{ toJSON(secrets) }}'
+      - name: Print Strategy Context
+        run: echo '${{ toJSON(strategy) }}'
+      - name: Print Matrix Context
+        run: echo '${{ toJSON(matrix) }}'
+      - name: Print Needs Context
+        run: echo '${{ toJSON(needs) }}'
+      - name: Print Inputs Context
+        run: echo '${{ toJSON(inputs) }}'
