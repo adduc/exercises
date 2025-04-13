@@ -47,6 +47,11 @@ resource "github_repository" "example" {
   allow_rebase_merge = false
 }
 
+resource "github_branch_default" "example" {
+  repository = github_repository.example.name
+  branch     = "main"
+}
+
 resource "github_repository_file" "example" {
   repository = github_repository.example.name
   file       = ".github/CODEOWNERS"
