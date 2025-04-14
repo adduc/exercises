@@ -4,8 +4,6 @@ name: PR:Terraform
 'on':
   pull_request:
     paths:
-      # This workflow
-      - '.github/workflows/pr-terraform.yml'
       # Terraform configuration
       - '**/*.tf'
 
