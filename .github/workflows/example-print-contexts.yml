@@ -32,3 +32,5 @@ jobs:
         run: echo '${{ toJSON(needs) }}'
       - name: Print Inputs Context
         run: echo '${{ toJSON(inputs) }}'
+      - name: Print Env Context
+        run: echo '${{ toJSON(env) }}'
