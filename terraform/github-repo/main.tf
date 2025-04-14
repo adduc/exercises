@@ -34,13 +34,9 @@ variable "owner" {
 ## Resources
 
 resource "github_repository" "example" {
-  name         = "example-terraform-managed-repo"
-  description  = "An example repository managed by the Github Terraform provider"
-  visibility   = "public"
-  has_issues   = true
-  has_projects = true
-  has_wiki     = false
-  auto_init    = true
+  name        = "example-terraform-managed-repo"
+  description = "An example repository managed by the Github Terraform provider"
+  visibility  = "public"
 
   allow_squash_merge = true
   allow_merge_commit = false
