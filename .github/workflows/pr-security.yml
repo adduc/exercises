@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Trufflehog
         # yamllint disable rule:line-length
-        uses: trufflesecurity/trufflehog@690e5c7aff8347c3885096f3962a0633d9129607 # v3.88.23
+        uses: trufflesecurity/trufflehog@690e5c7aff8347c3885096f3962a0633d9129607  # v3.88.23
         # yamllint enable
         with:
           extra_args: --results=verified,unknown
