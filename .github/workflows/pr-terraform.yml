@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   find:
-    name: Find main.tf files
+    name: Find changed modules
     runs-on: ubuntu-24.04
     outputs:
       dirs: ${{ steps.changed_modules.outputs.changed_modules }}
@@ -22,11 +22,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Squash
+      - name: Create squash commit (ACT Runner only)
         if: env.ACT == 'true'
         run: |
-          # squash all commits in this branch into a single commit
-          # to emulate github's merge ref
+          # Github will automatically create a merge ref to use when invoking
+          # workflows, but ACT takes the current commit (and its working tree)
+          # as the base for the workflow. To emulate the merge ref, we can
+          # create a squash commit to represent the changes.
           git reset --soft main
           git add .
           git config user.name "GitHub Actions"
