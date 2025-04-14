@@ -44,26 +44,19 @@ jobs:
           )
           echo dirs=$DIRS >> $GITHUB_OUTPUT
 
-      - name: Determine changed files
+      - name: Changed files
         id: changed_files
-        run: |
-          set -o pipefail -o errexit -o nounset
-
-          CHANGED_FILES=$( \
-            git diff --name-only HEAD^..HEAD \
-            | jq -ncR '[inputs]' \
-          )
-          echo "files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c
 
       - name: Cross-check to determine changed modules
         id: changed_modules
         run: |
-          FILES='${{ steps.changed_files.outputs.files }}'
+          FILES='${{ steps.changed_files.outputs.all_changed_and_modified_files }}'
           DIRS='${{ steps.find.outputs.dirs }}'
           CHANGED=()
 
           for dir in $(echo $DIRS | jq -r '.[]'); do
-            for file in $(echo $FILES | jq -r '.[]'); do
+            for file in $(echo $FILES); do
               # check if dir is a prefix of file
               if [[ "./$file" == "$dir"* ]]; then
                 CHANGED+=("$dir")
