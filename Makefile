@@ -29,8 +29,21 @@ php-lint-serial: ## Lint all PHP exercises (in serial)
 
 ## CI Recipes
 
-ACT_CMD = act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:full-24.04
+# For running act with Docker socket group permissions
+# @see https://github.com/nektos/act/issues/1798#issuecomment-2030908166
+
+ACT_CMD = act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:full-24.04 \
+	--action-offline-mode \
+	--container-options "--group-add $$(stat -c %g /var/run/docker.sock)"
 
 ci/act/pr-terraform: ## Run Terraform PR checks using act
 	@echo "Running Terraform PR checks using act..."
-	@$(ACT_CMD) pull_request -W .github/workflows/pr-terraform.yml
+	@$(ACT_CMD) pull_request --workflows .github/workflows/pr-terraform.yml
+
+ci/act/print-contexts:
+	@echo "Running print-contexts workflow using act..."
+	@$(ACT_CMD) pull_request --workflows .github/workflows/example-print-contexts.yml
+
+ci/act/pr-security:
+	@echo "Running Security PR checks using act..."
+	@$(ACT_CMD) pull_request --workflows .github/workflows/pr-security.yml
