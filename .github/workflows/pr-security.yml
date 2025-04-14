@@ -1,0 +1,39 @@
+# Security Checks
+#
+# Trufflehog is used to scan for sensitive data like secrets, api keys,
+# etc.
+# @see https://github.com/trufflesecurity/trufflehog
+
+---
+name: PR:Security
+
+'on':
+  pull_request:
+
+jobs:
+  trufflehog:
+    runs-on: ubuntu-24.04
+    steps:
+
+      # To allow trufflehog to scan each commit in the PR, not just the
+      # merge commit, we need to determine the number of commits in the
+      # PR to fetch, and switch from the merge ref to the branch ref
+      - name: Determining PR Commit Depth
+        run: |
+          commit_count=${{ github.event.pull_request.commits }}
+          echo "depth=$(($commit_count + 2))" >> $GITHUB_ENV
+
+          ref=${{ github.event.pull_request.head.ref }}
+          echo "branch=$ref" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.branch }}
+          fetch-depth: ${{ env.depth }}
+
+      - name: Run Trufflehog
+        # yamllint disable rule:line-length
+        uses: trufflesecurity/trufflehog@690e5c7aff8347c3885096f3962a0633d9129607  # v3.88.23
+        # yamllint enable
+        with:
+          extra_args: --results=verified,unknown
