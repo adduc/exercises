@@ -1,14 +1,11 @@
+# Pagination in Laravel
 
+This is a simple Laravel project demonstrating the use of custom pagination views using Laravel's built-in pagination functionality.
 
-```sh
+## Context
 
-./artisan migrate:fresh --seeder BusinessSeeder
-
-
-php artisan vendor:publish --tag=laravel-pagination
-
-```
-
+I was working on a Laravel project and had a few routes I wanted to
+paginate. Along with using Laravel's built-in pagination, I wanted to customize the pagination views to fit the design of my application.
 
 <!-- Links -->
 
