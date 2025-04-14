@@ -24,10 +24,17 @@ import {
   id = "exercises"
 }
 
+import {
+  to = github_branch_default.default
+  id = "exercises"
+}
+
 ## Resources
 
 resource "github_repository" "repo" {
-  name = "exercises"
+  name         = "exercises"
+  description  = "proof of concept exercises for various technologies, functionality, design patterns, etc."
+  has_projects = false
 
   # PRs
   allow_merge_commit     = false
@@ -41,11 +48,3 @@ resource "github_branch_default" "default" {
   branch     = "main"
 }
 
-resource "github_branch_protection" "default" {
-  repository_id = github_repository.repo.id
-  pattern       = github_branch_default.default.branch
-
-  required_pull_request_reviews {
-    required_approving_review_count = 0
-  }
-}

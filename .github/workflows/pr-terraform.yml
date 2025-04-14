@@ -14,27 +14,68 @@ permissions:
 
 jobs:
   find:
-    name: Find main.tf files
+    name: Find changed modules
     runs-on: ubuntu-24.04
     outputs:
-      dirs: ${{ steps.find.outputs.dirs }}
+      dirs: ${{ steps.changed_modules.outputs.changed_modules }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Find main.tf files
+      - name: Create squash commit (ACT Runner only)
+        if: env.ACT == 'true'
+        run: |
+          # Github will automatically create a merge ref to use when invoking
+          # workflows, but ACT takes the current commit (and its working tree)
+          # as the base for the workflow. To emulate the merge ref, we can
+          # create a squash commit to represent the changes.
+          git reset --soft main
+          git add .
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git commit -m "Squash all commits"
+
+      - name: Find terraform modules
         id: find
         run: |
+          set -o pipefail -o errexit -o nounset
+
           DIRS=$( \
-            find . -name '*main.tf' -exec dirname {} \; \
-            | jq -cR '[inputs]' \
+            find -name '*main.tf' -exec dirname {} \; \
+            | jq -ncR '[inputs]' \
           )
-          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+          echo dirs=$DIRS >> $GITHUB_OUTPUT
+
+      - name: Changed files
+        id: files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c
+
+      - name: Cross-check to determine changed modules
+        id: changed_modules
+        run: |
+          FILES='${{ steps.files.outputs.all_changed_and_modified_files }}'
+          DIRS='${{ steps.find.outputs.dirs }}'
+          CHANGED=()
+
+          for dir in $(echo $DIRS | jq -r '.[]'); do
+            for file in $(echo $FILES); do
+              # check if dir is a prefix of file
+              if [[ "./$file" == "$dir"* ]]; then
+                CHANGED+=("$dir")
+                break
+              fi
+            done
+          done
+
+          CHANGED=$(printf "%s\n" "${CHANGED[@]}" | jq -ncR '[inputs]')
+          echo "changed_modules=$CHANGED" >> $GITHUB_OUTPUT
+
 
   format:
     name: Format
     runs-on: ubuntu-24.04
     needs: find
+    if: ${{ needs.find.outputs.dirs != '[""]' }}
     strategy:
       fail-fast: false
       matrix:
@@ -52,7 +93,7 @@ jobs:
         run: |
           set -o pipefail -o errexit -o nounset
 
-          DIFF=$(terraform fmt -diff -recursive ${{ matrix.dir }})
+          DIFF=$(terraform fmt -diff -recursive ${{ matrix.dir }} 2>&1)
           if [ -n "$DIFF" ]; then
             echo "At least one Terraform file is not formatted correctly:"
             echo "$DIFF"
@@ -65,6 +106,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-24.04
     needs: find
+    if: ${{ needs.find.outputs.dirs != '[""]' }}
     strategy:
       fail-fast: false
       matrix:
@@ -86,4 +128,6 @@ jobs:
           tflint_version: "v0.52.0"
 
       - name: Validate Terraform
-        run: tflint --chdir ${{ matrix.dir }}
+        run:
+          set -o pipefail -o errexit -o nounset
+          tflint --chdir ${{ matrix.dir }}
