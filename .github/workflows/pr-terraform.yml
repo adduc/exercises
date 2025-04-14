@@ -22,15 +22,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fetch base branch
+      - name: Squash
+        if: env.ACT == 'true'
         run: |
-          set -o pipefail -o errexit -o nounset
-
-          # set up origin to use token from actions/checkout (used by act)
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-
-          TARGET=${{ github.event.pull_request.base.ref || 'main' }}
-          git fetch origin $TARGET
+          # squash all commits in this branch into a single commit
+          # to emulate github's merge ref
+          git reset --soft main
+          git add .
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git commit -m "Squash all commits"
 
       - name: Find terraform modules
         id: find
@@ -48,10 +49,8 @@ jobs:
         run: |
           set -o pipefail -o errexit -o nounset
 
-          # find all files changed relative to main
-          TARGET=origin/${{ github.event.pull_request.base.ref || 'main' }}
-          CHANGED_FILES=$(
-            git diff --name-only $TARGET...HEAD \
+          CHANGED_FILES=$( \
+            git diff --name-only HEAD^..HEAD \
             | jq -ncR '[inputs]' \
           )
           echo "files=$CHANGED_FILES" >> $GITHUB_OUTPUT
@@ -81,6 +80,7 @@ jobs:
     name: Format
     runs-on: ubuntu-24.04
     needs: find
+    if: ${{ needs.find.outputs.dirs != '[""]' }}
     strategy:
       fail-fast: false
       matrix:
@@ -98,7 +98,7 @@ jobs:
         run: |
           set -o pipefail -o errexit -o nounset
 
-          DIFF=$(terraform fmt -diff -recursive ${{ matrix.dir }})
+          DIFF=$(terraform fmt -diff -recursive ${{ matrix.dir }} 2>&1)
           if [ -n "$DIFF" ]; then
             echo "At least one Terraform file is not formatted correctly:"
             echo "$DIFF"
@@ -111,6 +111,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-24.04
     needs: find
+    if: ${{ needs.find.outputs.dirs != '[""]' }}
     strategy:
       fail-fast: false
       matrix:
@@ -132,4 +133,6 @@ jobs:
           tflint_version: "v0.52.0"
 
       - name: Validate Terraform
-        run: tflint --chdir ${{ matrix.dir }}
+        run:
+          set -o pipefail -o errexit -o nounset
+          tflint --chdir ${{ matrix.dir }}
