@@ -23,7 +23,7 @@ variable "initial_root_password" {
 
 variable "gitlab_chart_version" {
   type    = string
-  default = "8.10.3"
+  default = "8.10.4"
 }
 
 variable "ssh_host_ecdsa_key" { type = string }

@@ -1,6 +1,7 @@
 ---
 services:
   server:
+    # @see https://github.com/k3s-io/k3s/releases
     image: rancher/k3s:v1.32.3-k3s1
     tmpfs:
       - /run
