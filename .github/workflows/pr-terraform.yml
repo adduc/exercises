@@ -17,19 +17,51 @@ jobs:
     name: Find main.tf files
     runs-on: ubuntu-24.04
     outputs:
-      dirs: ${{ steps.find.outputs.dirs }}
+      dirs: ${{ steps.changed_modules.outputs.changed_modules }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Find main.tf files
+      - name: Find terraform modules
         id: find
         run: |
           DIRS=$( \
-            find . -name '*main.tf' -exec dirname {} \; \
-            | jq -cR '[inputs]' \
+            find -name '*main.tf' -exec dirname {} \; \
+            | jq -ncR '[inputs]' \
           )
-          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+          echo dirs=$DIRS >> $GITHUB_OUTPUT
+
+      - name: Determine changed files
+        id: changed_files
+        run: |
+          # find all files changed relative to main
+          TARGET=${{ github.event.pull_request.base.ref || 'main' }}
+          CHANGED_FILES=$(
+            git diff --name-only $TARGET...HEAD \
+            | jq -ncR '[inputs]' \
+          )
+          echo "all_changed_and_modified_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+
+      - name: Cross-check to determine changed modules
+        id: changed_modules
+        run: |
+          CHANGED_FILES='${{ steps.changed_files.outputs.all_changed_and_modified_files }}'
+          DIRS='${{ steps.find.outputs.dirs }}'
+          CHANGED_MODULES=()
+
+          for dir in $(echo $DIRS | jq -r '.[]'); do
+            for file in $(echo $CHANGED_FILES | jq -r '.[]'); do
+              # check if dir is a prefix of file
+              if [[ "./$file" == "$dir"* ]]; then
+                CHANGED_MODULES+=("$dir")
+                break
+              fi
+            done
+          done
+
+          CHANGED_MODULES=$(printf "%s\n" "${CHANGED_MODULES[@]}" | jq -ncR '[inputs]')
+          echo "changed_modules=$CHANGED_MODULES" >> $GITHUB_OUTPUT
+
 
   format:
     name: Format
