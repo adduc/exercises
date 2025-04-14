@@ -35,6 +35,8 @@ jobs:
       - name: Find terraform modules
         id: find
         run: |
+          set -o pipefail -o errexit -o nounset
+
           DIRS=$( \
             find -name '*main.tf' -exec dirname {} \; \
             | jq -ncR '[inputs]' \
@@ -44,8 +46,10 @@ jobs:
       - name: Determine changed files
         id: changed_files
         run: |
+          set -o pipefail -o errexit -o nounset
+
           # find all files changed relative to main
-          TARGET=${{ github.event.pull_request.base.ref || 'main' }}
+          TARGET=origin/${{ github.event.pull_request.base.ref || 'main' }}
           CHANGED_FILES=$(
             git diff --name-only $TARGET...HEAD \
             | jq -ncR '[inputs]' \
