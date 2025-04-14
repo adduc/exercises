@@ -70,47 +70,12 @@ jobs:
           CHANGED=$(printf "%s\n" "${CHANGED[@]}" | jq -ncR '[inputs]')
           echo "changed_modules=$CHANGED" >> $GITHUB_OUTPUT
 
-
-  format:
-    name: Format
+  lint-format:
+    name: Lint and Format
     runs-on: ubuntu-24.04
     needs: find
     if: ${{ needs.find.outputs.dirs != '[""]' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        dir: ${{ fromJson(needs.find.outputs.dirs) }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
-        with:
-          terraform_version: "1.11.3"
-
-      - name: Format Terraform
-        run: |
-          set -o pipefail -o errexit -o nounset
-
-          DIFF=$(terraform fmt -diff -recursive ${{ matrix.dir }} 2>&1)
-          if [ -n "$DIFF" ]; then
-            echo "At least one Terraform file is not formatted correctly:"
-            echo "$DIFF"
-            exit 1
-          else
-            echo "All Terraform files are formatted correctly."
-          fi
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-24.04
-    needs: find
-    if: ${{ needs.find.outputs.dirs != '[""]' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        dir: ${{ fromJson(needs.find.outputs.dirs) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -127,7 +92,29 @@ jobs:
         with:
           tflint_version: "v0.52.0"
 
-      - name: Validate Terraform
-        run:
+      - name: Format Terraform
+        run: |
           set -o pipefail -o errexit -o nounset
-          tflint --chdir ${{ matrix.dir }}
+
+          DIRS_JSON='${{ needs.find.outputs.dirs }}'
+          DIRS=$(echo $DIRS_JSON | jq -r '.[]')
+
+          DIFF=$(terraform fmt -diff -recursive $DIRS 2>&1)
+          if [ -n "$DIFF" ]; then
+            echo "At least one Terraform file is not formatted correctly:"
+            echo "$DIFF"
+            exit 1
+          else
+            echo "All Terraform files are formatted correctly."
+          fi
+
+      - name: Validate Terraform
+        run: |
+          set -o pipefail -o errexit -o nounset -o xtrace
+
+          DIRS_JSON='${{ needs.find.outputs.dirs }}'
+          DIRS=$(echo $DIRS_JSON | jq -r '.[]')
+
+          for dir in $DIRS; do
+            tflint --chdir $dir
+          done
