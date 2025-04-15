@@ -12,7 +12,9 @@ variables:
 
   EXAMPLE_OPTIONS:
     description: "Example Select"
+    value: ""
     options:
+      - ""
       - "one"
       - "two"
       - "three"
