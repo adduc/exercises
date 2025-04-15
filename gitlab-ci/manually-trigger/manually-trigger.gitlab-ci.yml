@@ -1,0 +1,13 @@
+---
+# Create a GitLab CI configuration file that can be manually triggered
+stages:
+  - hello
+
+default:
+  image: alpine:3.21
+
+manually-trigger:
+  stage: hello
+  script:
+    - echo "Hello, World!"
+  when: manual
