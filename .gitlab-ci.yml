@@ -2,3 +2,4 @@
 include:
   - local: 'gitlab-ci/local-include/local-include.gitlab-ci.yml'
   - local: 'gitlab-ci/manually-trigger/manually-trigger.gitlab-ci.yml'
+  - local: 'gitlab-ci/manual-inputs/manual-inputs.gitlab-ci.yml'
