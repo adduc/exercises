@@ -1,0 +1,28 @@
+---
+# Create a GitLab CI configuration file that can be manually triggered
+stages:
+  - hello
+
+default:
+  image: alpine:3.21
+
+variables:
+  EXAMPLE_INPUT:
+    description: "Example Input"
+
+  EXAMPLE_OPTIONS:
+    description: "Example Select"
+    value: ""
+    options:
+      - ""
+      - "one"
+      - "two"
+      - "three"
+
+manually-trigger-with-input:
+  stage: hello
+  script:
+    - |-
+      echo "EXAMPLE_INPUT: $EXAMPLE_INPUT"
+      echo "EXAMPLE_OPTIONS: $EXAMPLE_OPTIONS"
+  when: manual
