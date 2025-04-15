@@ -44,4 +44,15 @@ resource "gitlab_project" "project" {
   name             = "exercises"
   visibility_level = "public"
   default_branch   = "main"
+  squash_option    = "always"
+}
+
+resource "gitlab_branch_protection" "main" {
+  project = gitlab_project.project.id
+  branch  = gitlab_project.project.default_branch
+
+  push_access_level      = "maintainer"
+  merge_access_level     = "developer"
+  unprotect_access_level = "maintainer"
+  allow_force_push       = false
 }
