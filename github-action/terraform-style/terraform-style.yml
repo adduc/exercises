@@ -1,5 +1,5 @@
 ---
-name: Terraform:Style
+name: "Terraform:Style"
 
 'on':
   workflow_call:
@@ -44,7 +44,7 @@ name: Terraform:Style
         run: |
           set -o pipefail -o errexit -o nounset
 
-          DIRS_JSON='${{ needs.find.outputs.dirs }}'
+          DIRS_JSON='${{ inputs.module_dirs }}'
           DIRS=$(echo $DIRS_JSON | jq -r '.[]')
 
           DIFF=$(terraform fmt -diff -recursive $DIRS 2>&1)
@@ -60,7 +60,7 @@ name: Terraform:Style
         run: |
           set -o pipefail -o errexit -o nounset -o xtrace
 
-          DIRS_JSON='${{ needs.find.outputs.dirs }}'
+          DIRS_JSON='${{ inputs.module_dirs }}'
           DIRS=$(echo $DIRS_JSON | jq -r '.[]')
 
           for dir in $DIRS; do
