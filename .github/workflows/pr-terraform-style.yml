@@ -4,8 +4,6 @@ name: PR:Terraform
 'on':
   pull_request:
     paths:
-      # This workflow
-      - '.github/workflows/pr-terraform.yml'
       # Terraform configuration
       - '**/*.tf'
 
@@ -67,54 +65,19 @@ jobs:
             done
           done
 
-          CHANGED=$(printf "%s\n" "${CHANGED[@]}" | jq -ncR '[inputs]')
-          echo "changed_modules=$CHANGED" >> $GITHUB_OUTPUT
-
-  lint-format:
-    name: Lint and Format
-    runs-on: ubuntu-24.04
-    needs: find
-    if: ${{ needs.find.outputs.dirs != '[""]' }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
-        with:
-          terraform_version: "1.11.3"
-
-      - name: Setup TFLint
-        # yamllint disable rule:line-length
-        uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6
-        # yamllint enable
-        with:
-          tflint_version: "v0.52.0"
-
-      - name: Format Terraform
-        run: |
-          set -o pipefail -o errexit -o nounset
-
-          DIRS_JSON='${{ needs.find.outputs.dirs }}'
-          DIRS=$(echo $DIRS_JSON | jq -r '.[]')
-
-          DIFF=$(terraform fmt -diff -recursive $DIRS 2>&1)
-          if [ -n "$DIFF" ]; then
-            echo "At least one Terraform file is not formatted correctly:"
-            echo "$DIFF"
-            exit 1
+          # if empty, set to empty array
+          if [ ${#CHANGED[@]} -eq 0 ]; then
+            echo "changed_modules=[]" >> $GITHUB_OUTPUT
           else
-            echo "All Terraform files are formatted correctly."
+            CHANGED=$(printf "%s\n" "${CHANGED[@]}" | jq -ncR '[inputs]')
+            echo "changed_modules=$CHANGED" >> $GITHUB_OUTPUT
           fi
 
-      - name: Validate Terraform
-        run: |
-          set -o pipefail -o errexit -o nounset -o xtrace
+          echo 'changed_modules=[".github/infra"]' >> $GITHUB_OUTPUT
 
-          DIRS_JSON='${{ needs.find.outputs.dirs }}'
-          DIRS=$(echo $DIRS_JSON | jq -r '.[]')
-
-          for dir in $DIRS; do
-            tflint --chdir $dir
-          done
+  style:
+    uses: ./.github/workflows/call-terraform-style.yml
+    needs: find
+    if: ${{ needs.find.outputs.dirs != '[]' }}
+    with:
+      module_dirs: ${{ needs.find.outputs.dirs }}
