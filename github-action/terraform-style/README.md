@@ -1,5 +1,3 @@
-Next steps:
+# Reusable Github Workflow to lint and format Terraform code
 
-Refactor the lint-format job into a reusable workflow to differentiate
-between the process of identifying terraform modules that need
-formatting and the process of applying the formatting.
+This workflow demonstrates how to automate running tflint and `terraform fmt` against one or more Terraform directories. It can be used as a reusable workflow in other repositories.
