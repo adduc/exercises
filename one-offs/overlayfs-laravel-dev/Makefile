@@ -6,7 +6,6 @@ MERGED := $(DIRNAME).merged
 
 .ONESHELL:
 
-
 # check for fuse-overlayfs
 ifeq (, $(shell which fuse-overlayfs))
 $(error "fuse-overlayfs is not installed. Please install it to use this Makefile.")
@@ -22,7 +21,11 @@ ifeq (, $(shell test -d $(UPPER) && echo 1))
 $(error "Upper directory $(UPPER) does not exist. Please create it to use this Makefile.")
 endif
 
-mount: unmount
+
+help: ## Show this help message
+	@grep -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
+
+mount: unmount ## Mount the overlay filesystem
 	@set -o pipefail -o errexit -o nounset
 
 	rm -rf $(WORKDIR)
@@ -31,7 +34,7 @@ mount: unmount
 	fuse-overlayfs -o lowerdir=$(LOWER),upperdir=$(UPPER),workdir=$(WORKDIR) $(MERGED)
 	echo "$(MERGED) mounted successfully."
 
-unmount:
+unmount: ## Unmount the overlay filesystem
 	@set -o pipefail -o errexit -o nounset
 
 	echo "Checking if $(MERGED) is mounted..."
