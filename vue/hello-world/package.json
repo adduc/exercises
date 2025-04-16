@@ -1,0 +1,14 @@
+{
+  "type": "module",
+  "devDependencies": {
+    "esbuild": "0.25.2"
+  },
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --outfile=dist/bundle.js",
+    "serve": "esbuild src/index.ts --bundle --outfile=dist/bundle.js --serve=8000 --servedir=dist",
+    "watch": "node watch.js"
+  },
+  "dependencies": {
+    "vue": "^3.5.13"
+  }
+}
