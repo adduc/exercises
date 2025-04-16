@@ -65,14 +65,13 @@ jobs:
             done
           done
 
-          # # if empty, set to empty array
-          # if [ ${#CHANGED[@]} -eq 0 ]; then
-          #   echo "changed_modules=[]" >> $GITHUB_OUTPUT
-          # else
-          #   CHANGED=$(printf "%s\n" "${CHANGED[@]}" | jq -ncR '[inputs]')
-          #   echo "changed_modules=$CHANGED" >> $GITHUB_OUTPUT
-          # fi
-
+          # if empty, set to empty array
+          if [ ${#CHANGED[@]} -eq 0 ]; then
+            echo "changed_modules=[]" >> $GITHUB_OUTPUT
+          else
+            CHANGED=$(printf "%s\n" "${CHANGED[@]}" | jq -ncR '[inputs]')
+            echo "changed_modules=$CHANGED" >> $GITHUB_OUTPUT
+          fi
 
           echo 'changed_modules=[".github/infra"]' >> $GITHUB_OUTPUT
 
