@@ -77,7 +77,7 @@ jobs:
           echo 'changed_modules=[".github/infra"]' >> $GITHUB_OUTPUT
 
   style:
-    uses: ./github-action/terraform-style/terraform-style.yml
+    uses: ./.github/workflows/call-terraform-style.yml
     needs: find
     if: ${{ needs.find.outputs.dirs != '[]' }}
     with:
