@@ -38,7 +38,7 @@ unmount:
 
 	if mountpoint -q $(MERGED); then
 		echo "$(MERGED) is mounted, unmounting..."
-		fusermount -u $(MERGED)
+		fusermount -z -u $(MERGED)
 	else
 		echo "$(MERGED) is not mounted"
 	fi
