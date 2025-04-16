@@ -11,6 +11,8 @@ let ctx = await esbuild.context({
     alias: {
         'vue': 'vue/dist/vue.esm-bundler.js',
     },
+    jsxFactory: 'h',
+    jsxFragment: 'Fragment',
     define: {
         "__ESBUILD_WATCH__": "true",
         "__VUE_OPTIONS_API__": "false",
