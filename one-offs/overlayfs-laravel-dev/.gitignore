@@ -1,0 +1,7 @@
+# Overlay workdir (used to stage changes before applying them to the
+# upper layer)
+/*.workdir
+
+# Overlay merged directory (combined view of the lower and upper layers)
+# This is not a real directory, but a virtual one created by overlayfs
+/*.merged
