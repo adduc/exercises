@@ -5,3 +5,11 @@
 # Overlay merged directory (combined view of the lower and upper layers)
 # This is not a real directory, but a virtual one created by overlayfs
 /*.merged
+
+# Since Laravel's .gitignore files exist only in the lower layer, git
+# detects cache files in the upper layer as untracked files. We need to
+# ignore them here
+/*.upper/bootstrap/cache
+/*.upper/database/*.sqlite*
+/*.upper/storage
+/*.upper/vendor
