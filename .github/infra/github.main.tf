@@ -48,3 +48,15 @@ resource "github_branch_default" "default" {
   branch     = "main"
 }
 
+resource "github_branch_protection" "default" {
+  repository_id = github_repository.repo.name
+  pattern       = github_branch_default.default.branch
+
+  required_status_checks {
+    contexts = ["trufflehog"]
+  }
+
+  required_pull_request_reviews {
+    required_approving_review_count = 0
+  }
+}
