@@ -28,5 +28,5 @@ overlay filesystem. The Makefile contains the following targets:
 - `unmount`: Unmounts the overlay filesystem.
 
 <!-- Links -->
-fuse-overlayfs: https://github.com/containers/fuse-overlayfs
-GNU Make: https://www.gnu.org/software/make/
+[fuse-overlayfs]: https://github.com/containers/fuse-overlayfs
+[GNU Make]: https://www.gnu.org/software/make/
