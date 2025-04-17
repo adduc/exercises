@@ -1,0 +1,20 @@
+---
+services:
+  ansible:
+    image: alpine/ansible:2.18.1
+    volumes: ["./:/ansible"]
+    working_dir: /ansible
+
+    # We don't need network isolation for this container, so we can use
+    # the host network mode for slightly faster startup and reduced
+    # resource usage.
+    network_mode: host
+
+    # Handling trap signals gives the opportunity for graceful shutdown,
+    # and has the side effect of generally being faster than letting
+    # docker stop time out and kill the container.
+    init: true
+
+    # Keep the container running by providing a command that does not
+    # exit.
+    command: tail -f /dev/null
