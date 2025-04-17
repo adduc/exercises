@@ -1,7 +1,8 @@
+---
 services:
   ansible:
     image: alpine/ansible:2.18.1
-    volumes: [ "./:/ansible" ]
+    volumes: ["./:/ansible"]
     working_dir: /ansible
 
     # We don't need network isolation for this container, so we can use
