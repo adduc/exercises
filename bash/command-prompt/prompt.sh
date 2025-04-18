@@ -8,42 +8,43 @@ trap 'TIMER=${TIMER:-$EPOCHREALTIME}' DEBUG
 
 __prompt_command() {
   # grab exit code of last command
-  local EXIT_CODE=$?
+  EXIT_CODE=$?
+
+  local TIMER_SECS COL_RESET COL_DARK_GRAY COL_GREEN COL_CYAN \
+    TEXT_USER TEXT_HOST TEXT_PATH TEXT_TIME LINES LEFT_TEXT RIGHT_TEXT \
+    HR_LENGTH PS1_HR
 
   # determine duration of last command
-  local TIMER_SECS=$(echo "($EPOCHREALTIME - $TIMER)" | bc)
+  TIMER_SECS=$(echo "($EPOCHREALTIME - $TIMER)" | bc)
 
-  # limit decimal places to 2 and add comma to thousands
-  local TIMER_SECS=$(printf "%'.3f" $TIMER_SECS)
+  # limit decimal places to 3 and add comma to thousands
+  TIMER_SECS=$(printf "%'.3f" "$TIMER_SECS")
 
-  # clear TIMER to ensure the timestamp is recorded when the next
-  # command is run
-  unset TIMER
 
   # To make building the prompt easier, we can define some variables
   # for the colors and text we want to use.
-  local COL_RESET='\[\033[0m\]'
-  local COL_DARK_GRAY='\[\033[1;30m\]'
-  local COL_GREEN='\[\033[0;32m\]'
-  local COL_CYAN='\[\033[0;36m\]'
+  COL_RESET='\[\033[0m\]'
+  COL_DARK_GRAY='\[\033[1;30m\]'
+  COL_GREEN='\[\033[0;32m\]'
+  COL_CYAN='\[\033[0;36m\]'
 
-  local TEXT_USER='\u'
-  local TEXT_HOST='\h'
-  local TEXT_PATH='\w'
-  local TEXT_TIME="$(date +%H:%M:%S)"
+  TEXT_USER='\u'
+  TEXT_HOST='\h'
+  TEXT_PATH='\w'
+  TEXT_TIME="$(date +%H:%M:%S)"
 
   # Create an array to hold the lines of the prompt
-  local LINES=()
+  LINES=()
 
-  local LEFT_TEXT="${TEXT_TIME}"
+  LEFT_TEXT="${TEXT_TIME}"
 
   # Build prompt text for the last command's execution
-  local RIGHT_TEXT="(exit: $EXIT_CODE) (duration: $TIMER_SECS s)"
+  RIGHT_TEXT="(exit: $EXIT_CODE) (duration: $TIMER_SECS s)"
 
   # take the cols of the terminal and subtract the length of the left and right text
-  local HR_LENGTH=$(expr $(tput cols) - ${#LEFT_TEXT} - ${#RIGHT_TEXT} - 2)
+  HR_LENGTH=$(($(tput cols) - ${#LEFT_TEXT} - ${#RIGHT_TEXT} - 2))
 
-  local PS1_HR=$(printf %${HR_LENGTH}s)
+  PS1_HR=$(printf %${HR_LENGTH}s)
   PS1_HR=${PS1_HR// /─}
 
   LINES+=()
@@ -57,10 +58,12 @@ __prompt_command() {
   # Fourth Line: Prompt
   LINES+=("$ ")
 
-  # combine LINES into a single string
-  LINES=$(printf "%s\\n" "${LINES[@]}")
+  # combine LINES into a single string to become the prompt
+  PS1="$(printf "%s\\n" "${LINES[@]}")"
 
-  export PS1="$LINES"
+  # clear TIMER to ensure the timestamp is recorded when the next
+  # command is run, and clear exit code to avoid polluting environment
+  unset TIMER EXIT_CODE
 }
 
 export PROMPT_COMMAND='__prompt_command'
