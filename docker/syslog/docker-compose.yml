@@ -1,0 +1,18 @@
+---
+services:
+  syslog-server:
+    image: rsyslog/syslog_appliance_alpine
+    hostname: syslog-server
+    ports: ["514:514/udp"]
+    volumes: ["./logs:/logs", "./rsyslog.conf:/etc/rsyslog.conf"]
+
+  syslog-client:
+    image: busybox
+    hostname: syslog-client
+    depends_on: [syslog-server]
+    command:
+      - sh
+      - -c
+      - >-
+        echo "<13>$(date -Is) syslog-client Test log message"
+        | nc -u -w1 syslog-server 514
