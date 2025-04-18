@@ -15,8 +15,8 @@ __prompt_command() {
   EXIT_CODE=$?
 
   local TIMER_SECS COL_RESET COL_DARK_GRAY COL_GREEN COL_CYAN \
-    TEXT_USER TEXT_HOST TEXT_PATH TEXT_TIME LINES LEFT_TEXT RIGHT_TEXT \
-    HR_LENGTH PS1_HR DIR VCS_TYPE VCS_PATH VCS_REF DIR
+    TEXT_USER TEXT_HOST TEXT_PATH TEXT_TIME LINES RIGHT_TEXT HR_LENGTH \
+    PS1_HR DIR VCS_TYPE VCS_PATH VCS_REF DIR
 
   # determine duration of last command
   TIMER_SECS=$(echo "($EPOCHREALTIME - $TIMER)" | bc)
@@ -26,13 +26,11 @@ __prompt_command() {
 
   TEXT_TIME="$(date +%H:%M:%S)"
 
-  LEFT_TEXT="${TEXT_TIME}"
-
   # Build prompt text for the last command's execution
-  RIGHT_TEXT="(exit: $EXIT_CODE) (duration: $TIMER_SECS s)"
+  RIGHT_TEXT="$TEXT_TIME (exit: $EXIT_CODE) (duration: $TIMER_SECS s)"
 
-  # take the cols of the terminal and subtract the length of the left and right text
-  HR_LENGTH=$(($(tput cols) - ${#LEFT_TEXT} - ${#RIGHT_TEXT} - 2))
+  # take the cols of the terminal and subtract the length of the right text
+  HR_LENGTH=$(($(tput cols) - ${#RIGHT_TEXT} - 1))
 
   PS1_HR=$(printf %${HR_LENGTH}s)
   PS1_HR=${PS1_HR// /─}
@@ -56,8 +54,8 @@ __prompt_command() {
     DIR=$(dirname "$DIR")
   done
 
-  if [ ! -z ${VCS_TYPE+x} ]; then
-    VCS_PATH="${TEXT_PATH##$DIR}"
+  if [ -n "${VCS_TYPE-}" ]; then
+    VCS_PATH="${TEXT_PATH##"$DIR"}"
     VCS_PATH="${VCS_PATH##/}"
     TEXT_PATH="${DIR}"
   fi
@@ -79,13 +77,13 @@ __prompt_command() {
   LINES=()
 
   # First Line: Time, Horizontal Line, Exit Code, Duration
-  LINES+=("${COL_DARK_GRAY}${LEFT_TEXT} ${PS1_HR} ${RIGHT_TEXT}${COL_RESET}")
+  LINES+=("${COL_DARK_GRAY}${PS1_HR} ${RIGHT_TEXT}${COL_RESET}")
 
   # Third Line: User, Host, Path or VCS repo root
   LINES+=("${COL_GREEN}${TEXT_USER}@${TEXT_HOST}${COL_RESET}:${COL_CYAN}${TEXT_PATH}${COL_RESET}")
 
   # Fourth Line: VCS Ref, subdir within repo (if applicable)
-  if [ ! -z ${VCS_TYPE+x} ]; then
+  if [ -n "${VCS_TYPE-}" ]; then
     LINES+=("${COL_YELLOW}${VCS_TYPE} ${COL_GREEN}${VCS_REF}${COL_RESET}:${COL_CYAN}${VCS_PATH}${COL_RESET}")
   fi
 
