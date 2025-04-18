@@ -35,12 +35,11 @@ __prompt_command() {
   PS1_HR=$(printf %${HR_LENGTH}s)
   PS1_HR=${PS1_HR// /─}
 
-  # Detect if we're in an hg or git repo by checking for the presence
-  # of a .hg or .git directory in the current or any ancestor directory
-
   TEXT_PATH=$(pwd)
-  DIR="${TEXT_PATH}"
 
+  # Check for VCS type and ref by checking for .git or .hg directories
+  # to bypass invoking git/hg each time the prompt is drawn.
+  DIR="${TEXT_PATH}"
   while [ "$DIR" != "." ] && [ "$DIR" != "/" ]; do
     if [ -d "${DIR}/.git" ]; then
       VCS_TYPE="git"
@@ -48,18 +47,29 @@ __prompt_command() {
       break
     elif [ -d "${DIR}/.hg" ]; then
       VCS_TYPE="hg"
-      VCS_REF=$(cat "${DIR}/.hg/bookmarks.current")
+      if [ -f "${DIR}/.hg/bookmarks.current" ]; then
+        # if bookmarks.current exists, use that as the ref to avoid
+        # invoking mercurial each time
+        VCS_REF=$(cat "${DIR}/.hg/bookmarks.current")
+      else
+        # otherwise, fall back to using mercurial to get the current
+        # ref sha.
+        VCS_REF=$(hg -R "${DIR}" id -i)
+      fi
       break
     fi
     DIR=$(dirname "$DIR")
   done
 
+  # If current directory belongs to a VCS, split the path into the
+  # repo root and the subdir within the repo.
   if [ -n "${VCS_TYPE-}" ]; then
     VCS_PATH="${TEXT_PATH##"$DIR"}"
     VCS_PATH="${VCS_PATH##/}"
     TEXT_PATH="${DIR}"
   fi
 
+  # Replace $HOME with ~ in the path to emulate the default bash prompt
   TEXT_PATH="${TEXT_PATH/#$HOME/\~}"
 
   # To make building the prompt easier, we can define some variables
