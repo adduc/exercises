@@ -1,0 +1,7 @@
+---
+services:
+  fluentbit:
+    image: fluent/fluent-bit:4.0
+    ports:
+      - "5140:5140/udp"  # Syslog port
+    volumes: ["./etc:/fluent-bit/etc"]
