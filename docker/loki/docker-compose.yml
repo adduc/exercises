@@ -1,0 +1,7 @@
+---
+services:
+  loki:
+    image: grafana/loki:3
+    ports:
+      - "3100:3100"  # HTTP API
+      - "9095:9095"  # gRPC API
