@@ -1,0 +1,58 @@
+---
+##
+# In order to get systemd in the image running on newer hosts that have
+# started using cgroups v2 (like Fedora 36), you may need to enable
+# `systemd.unified_cgroup_hierarchy=0` on your host to force systemd to
+# use cgroups v1.
+#
+# In Fedora 36, this can be done by editing `/etc/default/grub` and
+# adding `systemd.unified_cgroup_hierarchy=0` to the `GRUB_CMDLINE_LINUX`
+# variable. After editing, update grub by running
+# `sudo grub2-mkconfig -o "$(readlink -e /etc/grub2.conf)"`
+##
+
+
+# https://stackoverflow.com/questions/55844981/ansible-insert-word-in-grub-cmdline
+
+- name: Force cgroups v1
+  hosts: localhost
+  become: true
+  gather_facts: false
+
+  vars:
+    grub_path: /etc/default/grub
+    grub_boot_path: /boot/grub2/grub.cfg
+
+  tasks:
+
+  - name: check if unified_cgroup_hierarchy is set to 0
+    lineinfile:
+      backup: true
+      path: "{{ grub_path }}"
+      regexp: '^GRUB_CMDLINE_LINUX=".*unified_cgroup_hierarchy=0'
+      state: absent
+    check_mode: true
+    register: grub_cmdline_check
+    changed_when: false
+
+  # if unified_cgroup_hierarchy is not set to 0, remove it if it exists
+  - name: remove unified_cgroup_hierarchy if it exists
+    lineinfile:
+      backrefs: true
+      path: "{{ grub_path }}"
+      regexp: "^(GRUB_CMDLINE_LINUX=\".*)unified_cgroup_hierarchy=[^ ]*(.*\")$"
+      line: '\1\2'
+    when: grub_cmdline_check.found == 0
+
+  - name: insert unified_cgroup_hierarchy=0 if not present
+    when: grub_cmdline_check.found == 0
+    lineinfile:
+      backrefs: true
+      path: "{{ grub_path }}"
+      regexp: "^(GRUB_CMDLINE_LINUX=\".*)\"$"
+      line: '\1 unified_cgroup_hierarchy=0"'
+    notify: update grub
+
+  handlers:
+  - name: update grub
+    command: grub2-mkconfig -o "{{ grub_boot_path }}"
