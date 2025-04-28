@@ -1,0 +1,32 @@
+---
+services:
+  ansible:
+    image: alpine/ansible:2.18.1
+    volumes: ["./:/ansible"]
+    working_dir: /ansible
+
+    # Handling trap signals gives the opportunity for graceful shutdown,
+    # and has the side effect of generally being faster than letting
+    # docker stop time out and kill the container.
+    init: true
+
+    # Keep the container running by providing a command that does not
+    # exit.
+    command: sleep infinity
+
+
+  target:
+    build: .
+
+    # To replicate a typical Ubuntu server environment, we will use
+    # systemd as the init system. Unlike other init systems, systemd
+    # requires a few additional configurations to work properly in
+    # a container.
+    cgroup: host
+    tmpfs: [/run]
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+
+    # This is optional, but it allows you to see the output of systemd
+    # in the container logs, which can be useful for debugging.
+    tty: true
