@@ -1,0 +1,24 @@
+---
+services:
+  fluent-bit:
+    image: fluent/fluent-bit:4.0
+    command: -c /config/fluent-bit.yaml
+    volumes:
+      - ./watch:/log
+      - ./config/fluent-bit:/config
+      - ./data/fluent-bit:/data
+  victorialogs:
+    image: victoriametrics/victoria-logs:v1.19.0-victorialogs
+    volumes:
+      - ./data/victoria-logs:/victoria-logs-data
+    ports:
+      - "9428:9428"
+  grafana:
+    image: grafana/grafana:11.6.1
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config/grafana:/etc/grafana
+      - ./data/grafana:/var/lib/grafana
+    environment:
+      GF_INSTALL_PLUGINS: victoriametrics-logs-datasource
