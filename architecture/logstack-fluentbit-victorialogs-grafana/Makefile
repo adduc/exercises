@@ -24,7 +24,6 @@ logs: ## Display logs for all containers
 	@echo "Displaying logs for all containers..."
 	@docker compose logs -f
 
-
-create-log-entry:
+create-log-entry: ## Create a sample log entry in watch/a.log
 	@echo "Creating sample log entry..."
 	echo "asdfasdf $RANDOM" >> watch/a.log
