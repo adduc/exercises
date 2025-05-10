@@ -1,0 +1,8 @@
+# Plex configuration
+/config
+
+# Plex media
+/data
+
+# working directory for transcoding
+/transcode

@@ -1,0 +1,16 @@
+services:
+  plex:
+    container_name: plex
+    image: plexinc/pms-docker
+    restart: unless-stopped
+    environment:
+      - TZ=America/Chicago
+      - PLEX_CLAIM=claim-jbGTM7dp7N_ox18hbMjQ
+    network_mode: host
+    volumes:
+      - ./config:/config
+      - ./transcode:/transcode
+      - ./data:/data
+    devices:
+      - /dev/dvb/adapter0:/dev/dvb/adapter0
+      - /dev/dvb/adapter1:/dev/dvb/adapter1
