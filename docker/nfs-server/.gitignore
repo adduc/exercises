@@ -1,0 +1,5 @@
+# example NFS export volume
+/data
+
+# example mount point
+/mnt

@@ -1,0 +1,14 @@
+services:
+  nfs:
+    image: mekayelanik/nfs-server-alpine:latest
+    volumes:
+      - /lib/modules:/lib/modules:ro
+      - ./data:/data
+    ports:
+      - "2049:2049"
+      - "111:111"
+    cap_add:
+      - SYS_ADMIN
+      - SETPCAP
+    environment:
+      ALLOWED_CLIENT: "*"
