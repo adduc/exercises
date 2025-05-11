@@ -10,4 +10,6 @@ echo "SCRIPT_PATH: ${SCRIPT_PATH}"
 echo "SCRIPT_DIR: ${SCRIPT_DIR}"
 
 echo "sourcing source.sh"
+
+# shellcheck disable=SC1091
 . "${SCRIPT_DIR}/../source/source.sh"
