@@ -1,0 +1,54 @@
+---
+##
+# In order to get systemd in the image running on newer hosts that have
+# started using cgroups v2 (like Fedora 36), you may need to enable
+# `systemd.unified_cgroup_hierarchy=0` on your host to force systemd to
+# use cgroups v1.
+##
+
+# https://stackoverflow.com/questions/55844981/ansible-insert-word-in-grub-cmdline
+# https://github.com/systemd/systemd/releases/tag/v256-rc3
+
+- name: Force cgroups v1
+  hosts: localhost
+  become: true
+  gather_facts: false
+
+  vars:
+    grub_path: /etc/default/grub
+    grub_boot_path: /boot/grub2/grub.cfg
+    cmdline_var: SYSTEMD_CGROUP_ENABLE_LEGACY_FORCE
+
+  tasks:
+
+    - name: check if {{ cmdline_var }} is set to 1
+      lineinfile:
+        backup: true
+        path: "{{ grub_path }}"
+        regexp: '^GRUB_CMDLINE_LINUX=".*{{ cmdline_var }}=1'
+        state: absent
+      check_mode: true
+      register: grub_cmdline_check
+      changed_when: false
+
+    # if unified_cgroup_hierarchy is not set to 0, remove it if it exists
+    - name: remove unified_cgroup_hierarchy if it exists
+      lineinfile:
+        backrefs: true
+        path: "{{ grub_path }}"
+        regexp: "^(GRUB_CMDLINE_LINUX=\".*){{ cmdline_var }}=[^ ]*(.*\")$"
+        line: '\1\2'
+      when: grub_cmdline_check.found == 0
+
+    - name: insert {{ cmdline_var }}=1 if not present
+      when: grub_cmdline_check.found == 0
+      lineinfile:
+        backrefs: true
+        path: "{{ grub_path }}"
+        regexp: "^(GRUB_CMDLINE_LINUX=\".*)\"$"
+        line: '\1 {{ cmdline_var }}=1"'
+      notify: update grub
+
+  handlers:
+    - name: update grub
+      command: grub2-mkconfig -o "{{ grub_boot_path }}"
