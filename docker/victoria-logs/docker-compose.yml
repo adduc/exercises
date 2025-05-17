@@ -1,0 +1,8 @@
+services:
+  logs:
+    image: victoriametrics/victoria-logs:v1.19.0-victorialogs
+    ports:
+      - "9428:9428"
+    volumes:
+      - ./data:/victoria-logs-data
+    command: -storageDataPath=/victoria-logs-data
