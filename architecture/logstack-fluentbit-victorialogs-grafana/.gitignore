@@ -1,0 +1,5 @@
+# Data for services
+data
+
+# Directory fluent-bit watches for log files
+watch

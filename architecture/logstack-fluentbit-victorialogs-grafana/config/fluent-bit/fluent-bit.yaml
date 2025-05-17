@@ -1,0 +1,19 @@
+---
+pipeline:
+  inputs:
+    # tail /log/*.log
+    - name: tail
+      path: /log/*.log
+      db: /data/fluent-bit.db
+
+  outputs:
+    - name: http
+      match: "*"
+      host: victorialogs
+      port: 9428
+      format: json_lines
+      json_date_format: iso8601
+
+      # yamllint disable rule:line-length
+      uri: /insert/jsonline?_stream_fields=stream&_msg_field=log&_time_field=date
+      # yamllint enable
