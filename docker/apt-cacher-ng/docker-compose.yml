@@ -1,0 +1,14 @@
+services:
+  cache:
+    image: sameersbn/apt-cacher-ng:3.7.4-20220421
+    ports:
+      - "3142:3142"
+    volumes:
+      - ./cache:/var/cache/apt-cacher-ng
+
+  # Sample container to test the cache
+  # You can remove this service if not needed
+  dummy:
+    image: ubuntu:24.04
+    command: sleep infinity
+    init: true
