@@ -1,0 +1,7 @@
+[Unit]
+Description=Example OneShot Service
+OnFailure=OnFailure.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/systemd/user/OneShot.sh

@@ -1,0 +1,6 @@
+[Unit]
+Description=Example OnFailure Service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/systemd/user/OnFailure.sh
