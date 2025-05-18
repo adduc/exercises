@@ -1,0 +1,12 @@
+# NFS mount
+/data
+
+# Generated kubeconfig file
+/kubeconfig.yaml
+
+# Terraform-managed dependencies
+.terraform
+
+# Terraform state files
+terraform.tfstate
+terraform.tfstate.backup
