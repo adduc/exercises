@@ -1,0 +1,10 @@
+services:
+  php:
+    image: local/php-alpine:84-fpm-3.21-amd64
+    environment:
+      FPM_POOL_PORT1: 0:9000 3
+      FPM_POOL_PORT2: 0:9001 3
+      FPM_POOL_SOCKET1: /var/run/php-fpm.sock 3
+      FPM_POOL_SOCKET2: /var/run/php-fpm2.sock 3
+    volumes:
+      - ./app:/srv

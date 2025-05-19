@@ -1,0 +1,5 @@
+{
+    "require": {
+        "hollodotme/fast-cgi-client": "^3.1"
+    }
+}
