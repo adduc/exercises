@@ -8,7 +8,7 @@ env
 
 # for 1 to 5
 for i in {1..2}; do
-  echo "Example output: $RANDOM"
+  echo "$i: Example output: $RANDOM"
   sleep 1
 done
 

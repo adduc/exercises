@@ -2,7 +2,6 @@
 
 UNIT="OneShot.service"
 NUM_LINES="100"
-DEST_EMAIL="example@example.com"
 
 SYSTEMD_VERSION=$(systemctl --version | head -1 | awk '{ print $2}')
 
@@ -27,7 +26,7 @@ else
   # other invocations that might have happened previously).
   LOGS=$(
     journalctl \
-      _SYSTEMD_INVOCATION_ID=$MONITOR_INVOCATION_ID \
+      _SYSTEMD_INVOCATION_ID="$MONITOR_INVOCATION_ID" \
       --lines "$NUM_LINES" \
       --output cat \
       --no-pager
