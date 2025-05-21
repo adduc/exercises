@@ -1,0 +1,19 @@
+---
+services:
+  web:
+    image: adduc/nginx-alpine:3.21-amd64
+    ports: ["80:80"]
+    cpus: 2
+    environment: {VHOST_PHP_DEFAULT: _ /app/public app:9000}
+    volumes: ["./:/app"]
+
+  app:
+    image: adduc/php-alpine:84-work-3.21-amd64
+    volumes: ["./:/app"]
+    ports: ["8080:80"]
+    environment: {FPM_POOL_DEFAULT: 0:9000 5, DEFAULT_FPM_POOL_UID: 1000}
+    working_dir: /app
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
