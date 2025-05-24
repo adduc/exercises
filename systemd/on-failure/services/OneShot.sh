@@ -6,7 +6,7 @@ echo "PID: $$"
 
 env
 
-# for 1 to 5
+# loop to simulate a service doing work before erroring out
 for i in {1..2}; do
   echo "$i: Example output: $RANDOM"
   sleep 1
