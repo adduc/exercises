@@ -60,6 +60,12 @@ resource "docker_container" "k3s" {
   }
 
   ports {
+    # GitLab HTTPS
+    internal = 30443
+    external = 443
+  }
+
+  ports {
     # GitLab SSH
     internal = 30022
     external = 2222

@@ -148,24 +148,23 @@ resource "helm_release" "gitlab" {
   values = [
     # @see https://gitlab.com/gitlab-org/charts/gitlab/-/blob/master/values.yaml
     # @see https://docs.gitlab.com/charts/charts/globals/#general-application-settings
+
+
+    # for fixing kas frontend cookie, serve from same subdomain as gitlab
+    # @see https://gitlab.com/gitlab-org/charts/gitlab/-/issues/4920#note_1626545093
     yamlencode({
       global = {
         edition = "ce"
 
         hosts = {
           domain = "172.17.0.1.nip.io"
-          https  = false
           kas = {
-            name  = "kas.gitlab.172.17.0.1.nip.io"
-            https = false
+            name = "gitlab.172.17.0.1.nip.io"
           }
         }
 
         ingress = {
           configureCertmanager = false
-          tls = {
-            enabled = false
-          }
         }
 
         initialRootPassword = {
@@ -184,6 +183,10 @@ resource "helm_release" "gitlab" {
           initialDefaults = {
             signupEnabled = false
           }
+
+          gitlab_kas = {
+            externalUrl = "wss://gitlab.172.17.0.1.nip.io/-/kubernetes-agent/"
+          }
         }
 
         shell = {
@@ -192,10 +195,13 @@ resource "helm_release" "gitlab" {
           }
           port = 2222
         }
+      }
 
+      gitlab = {
         kas = {
-          tls = {
-            enabled = false
+          ingress = {
+            agentPath  = "/-/kubernetes-agent"
+            k8sApiPath = "/-/kubernetes-agent/k8s-proxy"
           }
         }
       }
@@ -204,15 +210,19 @@ resource "helm_release" "gitlab" {
         install = false
       }
 
+      "gitlab-runner" = {
+        certsSecretName = "gitlab-wildcard-tls-chain"
+      }
+
       nginx-ingress = {
         controller = {
           service = {
             type = "NodePort"
             nodePorts = {
               http         = 30080
+              https        = 30443
               gitlab-shell = 30022
             }
-            enableHttps = false
           }
         }
       }

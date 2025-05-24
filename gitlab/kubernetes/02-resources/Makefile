@@ -15,10 +15,19 @@ gitlab/recreate: ## Recreate the GitLab instance, useful for resetting the envir
 	[ ! -f ../kubeconfig.yaml ] || kubectl --kubeconfig=../kubeconfig.yaml wait --for=delete namespace gitlab --timeout=300s
 	$(TF_CMD) apply -auto-approve
 
-	$(MAKE) gitlab/set-root-theme
-	$(MAKE) gitlab/create-root-personal-access-token
-	$(MAKE) gitlab/trust-ssh-key
+	$(MAKE) -j4 \
+		gitlab/trust-self-signed-cert \
+		gitlab/set-root-theme \
+		gitlab/create-root-personal-access-token \
+		gitlab/trust-ssh-key
 	@echo "GitLab instance recreated successfully."
+
+gitlab/trust-self-signed-cert: ## Trust the self-signed certificate for the GitLab instance
+	kubectl --kubeconfig=../kubeconfig.yaml -n gitlab get secrets/gitlab-wildcard-tls-chain -o json \
+		| jq -r '.data.["gitlab.172.17.0.1.nip.io.crt"]' \
+		| base64 -d \
+		| sudo tee /etc/pki/ca-trust/source/anchors/dev-gitlab.pem \
+		&& sudo update-ca-trust
 
 gitlab/set-root-theme: ## Set the GitLab root user theme (dark mode where possible)
 	@echo "Setting GitLab root user theme..."
@@ -32,7 +41,7 @@ gitlab/create-root-personal-access-token: ## Create a Personal Access Token for 
 	@echo "Creating a new GitLab Personal Access Token for the root user..."
 
 	TOKEN=$$($(TF_CMD) output -raw root_personal_access_token) \
-	&& echo "User.find_by(username: 'root').personal_access_tokens.create(name: 'preseed', scopes: ['api'], expires_at: 1.year.from_now, token_digest: Gitlab::CryptoHelper.sha256('$$TOKEN'))" \
+	&& echo "User.find_by(username: 'root').personal_access_tokens.create(name: 'preseed', scopes: ['api', 'k8s_proxy'], expires_at: 1.year.from_now, token_digest: Gitlab::CryptoHelper.sha256('$$TOKEN'))" \
 		| kubectl --kubeconfig=../kubeconfig.yaml -n gitlab exec -i -c toolbox deployment.apps/gitlab-toolbox -- gitlab-rails runner -
 
 	@echo "Personal Access Token created"
