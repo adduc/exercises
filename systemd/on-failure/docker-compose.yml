@@ -1,0 +1,11 @@
+---
+services:
+  server:
+    build: .
+    cgroup: host
+    tmpfs: [/run]
+    tty: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - ./services:/etc/systemd/user
+    working_dir: /etc/systemd/user

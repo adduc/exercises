@@ -1,0 +1,22 @@
+[Unit]
+Description=Example Timer
+
+[Timer]
+Unit=OneShot.service
+
+# @see https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html#OnCalendar=
+OnCalendar=*:*:0/15
+
+# To conserve power, systemd defaults to a 1 minute accuracy for timers.
+# Since we are using a timer that expects to be triggered every 15
+# seconds, we need to increase the accuracy to 1 second. Otherwise, the
+# timer will only trigger at a minimum of 1 minute intervals.
+# @see https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html#AccuracySec=
+AccuracySec=1s
+
+[Install]
+# Systemd will not automatically start the timer on boot. Systemd
+# expects to be told when a service or timer should be started. In this
+# case, we tell systemd to start the timer once the "timers.target" Unit
+# is reached. This is the typical target for timers.
+WantedBy=timers.target
