@@ -7,6 +7,6 @@ match ($_SERVER['REQUEST_URI']) {
     default => http_response_code(200),
 };
 
-echo "$_SERVER[REQUEST_URI] - " . http_response_code() . "\n";
+echo "${_SERVER['REQUEST_URI']} - " . http_response_code() . "\n";
 
 echo "<br>Try /404, /403, /500, or /anything<br>";
