@@ -19,7 +19,7 @@
       changed_when: apt_cache.cache_updated
 
     - name: Install nginx
-      apt:
+      ansible.builtin.apt:
         name: nginx
         state: present
         install_recommends: false
