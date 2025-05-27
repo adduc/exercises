@@ -1,0 +1,25 @@
+---
+- name: Example Playbook
+  hosts: target
+  become: true
+  tasks:
+    - name: Add ppa:ondrej/nginx
+      ansible.builtin.apt_repository:
+        repo: ppa:ondrej/nginx
+        state: present
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        # apt cache shouldn't need to be updated if the PPA was just added,
+        # but will be needed when the playbook is run again in the future
+        # (e.g. to install a newer version of nginx).
+        update_cache: true
+        cache_valid_time: 86400  # 24 hours
+      register: apt_cache
+      changed_when: apt_cache.cache_updated
+
+    - name: Install nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        install_recommends: false
