@@ -1,0 +1,19 @@
+services:
+  web:
+    image: local/nginx-alpine:3.21-amd64
+    ports: ["80:80"]
+    # define cpu limit to 1000m
+    cpus: 2
+    mem_limit: 128m
+    environment:
+      VHOST_PHP_DEFAULT: "_ /srv/public app:9000"
+    volumes:
+      - ./example-laravel:/srv
+
+  app:
+    image: local/php-alpine:84-work-3.21-amd64
+    environment:
+      FPM_POOL_DEFAULT: 0:9000 5
+      DEFAULT_FPM_POOL_UID: 1000
+    volumes:
+      - ./example-laravel:/srv
