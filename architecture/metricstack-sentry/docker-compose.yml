@@ -6,7 +6,7 @@ services:
     cpus: 2
     mem_limit: 128m
     environment:
-      VHOST_PHP_DEFAULT: _ /srv/public app:9000
+      VHOST_PHP_DEFAULT: "_ /srv/public app:9000"
     volumes:
       - ./example-laravel:/srv
 
