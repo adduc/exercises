@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# shellcheck disable=SC3040
 set -o nounset -o errexit -o pipefail
 
 [ -z "${DEBUG:-}" ] || set -o xtrace
@@ -14,7 +15,7 @@ create_user() {
   UID=${UID:-1000}
   GID=${GID:-1000}
 
-  if ! id -u user &>/dev/null; then
+  if ! id -u user >/dev/null 2>&1; then
     adduser -u "$UID" -g "$GID" -D user
     echo "user:*" | chpasswd -e
   fi
