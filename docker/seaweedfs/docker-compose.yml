@@ -1,0 +1,14 @@
+---
+services:
+
+  server:
+    image: chrislusf/seaweedfs:3.89
+    ports: ["8333:8333"]
+    volumes: [./data:/data]
+    mem_limit: 32m
+
+    command: |-
+      server -s3
+      -master.electionTimeout 1s
+      -master.heartbeatInterval 100ms
+      -master.raftHashicorp
