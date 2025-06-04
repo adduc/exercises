@@ -1,3 +1,4 @@
+---
 services:
 
   server:
@@ -11,4 +12,3 @@ services:
       -master.electionTimeout 1s
       -master.heartbeatInterval 100ms
       -master.raftHashicorp
-
