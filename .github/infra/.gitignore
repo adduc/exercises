@@ -9,3 +9,6 @@ terraform.tfstate.backup
 
 # Terraform lock file (for provider versions)
 .terraform.lock.hcl
+
+# Environment configuration
+terraform.tfvars

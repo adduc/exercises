@@ -2,6 +2,7 @@
 
 provider "github" {
   owner = "adduc"
+  token = var.github_token
 }
 
 ## Required Providers
@@ -27,6 +28,13 @@ import {
 import {
   to = github_branch_default.default
   id = "exercises"
+}
+
+## Variables
+
+variable "github_token" {
+  type        = string
+  description = "GitHub personal access token with repo scope."
 }
 
 ## Resources
