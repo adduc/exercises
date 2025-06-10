@@ -1,7 +1,7 @@
 ifneq ($(wildcard .env),)
 include .env
 else
-$(info no .env file found in $(ROOT_DIR))
+$(info no .env file found)
 endif
 
 ifeq ($(GITHUB__USER_TOKEN),)
