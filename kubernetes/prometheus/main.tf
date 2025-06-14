@@ -47,7 +47,7 @@ provider "kubectl" {
 #   version          = "27.20.0"
 #   namespace        = "metrics"
 #   create_namespace = true
-
+#
 #   # @see https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus/Chart.yaml
 #   values = [
 #   ]
@@ -55,7 +55,7 @@ provider "kubectl" {
 
 
 
-# Around 1.4gb memory used, some alerts are firing that need to be
+# Around 2.0gb memory used, some alerts are firing that need to be
 # investigated due to k3s' default configuration
 
 resource "helm_release" "kube-prometheus-stack" {
@@ -66,7 +66,16 @@ resource "helm_release" "kube-prometheus-stack" {
   namespace        = "metrics"
   create_namespace = true
 
-  # @see https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus/Chart.yaml
+  # @see https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
   values = [
+    yamlencode({
+      defaultRules = {
+        disabled = {
+          KubeControllerManagerDown = true
+          KubeProxyDown             = true
+          KubeSchedulerDown         = true
+        }
+      }
+    })
   ]
 }
