@@ -1,7 +1,7 @@
 ---
 services:
   server:
-    image: local/ansible-alpine:3.22-amd64
+    image: adduc/ansible-alpine:3.22-amd64
     working_dir: /etc/ansible
     volumes:
       - ./ansible:/etc/ansible
@@ -16,7 +16,7 @@ services:
 
 
   target:
-    image: local/ansible-target-alpine:3.22-amd64
+    image: adduc/ansible-target-alpine:3.22-amd64
 
     # To replicate a typical Ubuntu server environment, we will use
     # systemd as the init system. Unlike other init systems, systemd
