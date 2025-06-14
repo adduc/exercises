@@ -1,4 +1,4 @@
-# Running Ansible against a Docker container
+# Running Ansible against an Ubuntu Docker container
 
 This exercise demonstrates how Ansible can be run against a Docker
 container over SSH when executing playbooks. This can be useful for to
