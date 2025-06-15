@@ -1,3 +1,4 @@
+---
 services:
   web:
     image: local/nginx-alpine:${ALPINE_VERSION}-amd64
@@ -21,4 +22,3 @@ services:
       DEFAULT_FPM_POOL_UID: ${UID}
     volumes:
       - ./example:/srv
-
