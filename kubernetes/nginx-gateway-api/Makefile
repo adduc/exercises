@@ -8,9 +8,7 @@ run: ## Start the k3s cluster and apply the Nginx Gateway API example
 	$(TF_CMD) apply -auto-approve
 
 start: ## Start the k3s cluster (does not create the Nginx Gateway API example)
-	docker compose up -d
-	@# @todo replace with health check
-	sleep 2
+	docker compose up -d --wait
 
 stop: ## Stop the k3s cluster
 	docker compose down
