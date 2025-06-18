@@ -56,6 +56,8 @@ source "vmware-iso" "ubuntu-2204" {
   snapshot_name    = "Installed"
   output_directory = "output"
 
+  headless = true
+
   boot_wait         = "5s"
   boot_key_interval = "5ms"
   boot_command = [
@@ -72,6 +74,11 @@ source "vmware-iso" "ubuntu-2204" {
         version: 1
         refresh-installer:
           update: true
+        storage:
+          swap:
+            size: 0
+          layout:
+            name: direct
         locale: en_US
         keyboard:
           layout: us
