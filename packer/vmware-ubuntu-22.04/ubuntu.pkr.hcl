@@ -83,10 +83,6 @@ source "vmware-iso" "ubuntu-2204" {
         timezone: America/Chicago
         source:
           id: ubuntu-server-minimal
-        identity:
-          hostname: ubuntu
-          username: ubuntu
-          password: ${var.password_hash}
         ssh:
           install-server: true
           allow-pw: true
@@ -98,10 +94,19 @@ source "vmware-iso" "ubuntu-2204" {
           # Disable unattended-upgrades
           - ( FILE="/target/usr/bin/unattended-upgrade" ; until [ -e "$FILE" ] ; do sleep 1 ; done ; sed -i '1i#!/bin/true' "$FILE" ) &
         late-commands:
-          - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu
-          - chmod 440 /target/etc/sudoers.d/ubuntu
           # Re-enable unattended-upgrades
           - sed -i '\,^#!/bin/true$,d' "/target/usr/bin/unattended-upgrade"
+
+        user-data:
+          hostname: ubuntu
+          users:
+            - name: ubuntu
+              shell: /bin/bash
+              lock_passwd: false
+              passwd: ${var.password_hash}
+              sudo: ALL=(ALL) NOPASSWD:ALL
+              ssh_authorized_keys:
+                - ${file("~/.ssh/id_ed25519.pub")}
 
     EOT
   }
