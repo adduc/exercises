@@ -31,4 +31,4 @@ jobs:
       - name: yamllint
         run: |
           find \( -iname '*.yml' -or -iname '*.yaml' \) -print0 \
-          | xargs -0 yamllint
+          | xargs -0 yamllint --strict

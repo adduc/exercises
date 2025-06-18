@@ -1,3 +1,4 @@
+---
 services:
   pg15:
     image: postgres:15-alpine

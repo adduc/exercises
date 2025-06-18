@@ -1,3 +1,4 @@
+---
 all:
   vars:
     # While we install Python 3 on the target, ansible warns us that

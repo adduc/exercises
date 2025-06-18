@@ -1,3 +1,4 @@
+---
 services:
   web:
     image: local/nginx-alpine:3.21-amd64

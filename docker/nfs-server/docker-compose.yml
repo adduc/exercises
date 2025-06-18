@@ -1,3 +1,4 @@
+---
 services:
   nfs:
     image: mekayelanik/nfs-server-alpine:latest

@@ -1,3 +1,4 @@
+---
 services:
   php:
     image: local/php-alpine:84-fpm-3.21-amd64
