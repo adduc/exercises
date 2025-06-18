@@ -72,8 +72,6 @@ source "vmware-iso" "ubuntu-2204" {
       #cloud-config
       autoinstall:
         version: 1
-        refresh-installer:
-          update: true
         storage:
           swap:
             size: 0
@@ -96,9 +94,15 @@ source "vmware-iso" "ubuntu-2204" {
         package_upgrade: false
         packages:
           - open-vm-tools
+        early-commands:
+          # Disable unattended-upgrades
+          - ( FILE="/target/usr/bin/unattended-upgrade" ; until [ -e "$FILE" ] ; do sleep 1 ; done ; sed -i '1i#!/bin/true' "$FILE" ) &
         late-commands:
           - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu
           - chmod 440 /target/etc/sudoers.d/ubuntu
+          # Re-enable unattended-upgrades
+          - sed -i '\,^#!/bin/true$,d' "/target/usr/bin/unattended-upgrade"
+
     EOT
   }
 }
