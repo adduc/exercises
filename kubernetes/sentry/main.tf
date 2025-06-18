@@ -74,6 +74,10 @@ resource "helm_release" "sentry" {
           }
         }
       }
+
+      ingress = {
+        enabled = false
+      }
     })
   ]
 
