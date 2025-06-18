@@ -72,24 +72,28 @@ source "vmware-iso" "ubuntu-2204" {
       #cloud-config
       autoinstall:
         version: 1
-        storage:
-          swap:
-            size: 0
-          layout:
-            name: direct
         locale: en_US
         keyboard:
           layout: us
         timezone: America/Chicago
         source:
           id: ubuntu-server-minimal
+
+        storage:
+          swap:
+            size: 0
+          layout:
+            name: direct
+
         ssh:
           install-server: true
           allow-pw: true
+
         package_update: false
         package_upgrade: false
         packages:
           - open-vm-tools
+
         early-commands:
           # Disable unattended-upgrades
           - ( FILE="/target/usr/bin/unattended-upgrade" ; until [ -e "$FILE" ] ; do sleep 1 ; done ; sed -i '1i#!/bin/true' "$FILE" ) &
