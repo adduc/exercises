@@ -1,0 +1,6 @@
+{
+    "require": {
+        "hollodotme/fast-cgi-client": "^3.1",
+        "react/http": "^1.11"
+    }
+}
