@@ -56,6 +56,9 @@ resource "helm_release" "victoria-logs" {
           nodePort = 30080
         }
       }
+      vector = {
+        enabled = true
+      }
     })
   ]
 }
