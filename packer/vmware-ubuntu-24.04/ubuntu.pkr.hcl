@@ -43,6 +43,7 @@ source "vmware-iso" "ubuntu-noble" {
   vhv_enabled          = true
   network_adapter_type = "vmxnet3"
 
+  headless = true
 
   # Use of snapshot requires workstation (not player) to work. Newer versions of
   # the vmware plugin should handle starting workstation automatically, but I
@@ -66,6 +67,11 @@ source "vmware-iso" "ubuntu-noble" {
       #cloud-config
       autoinstall:
         version: 1
+        storage:
+          swap:
+            size: 0
+          layout:
+            name: direct
         locale: en_US
         keyboard:
           layout: us
@@ -85,9 +91,14 @@ source "vmware-iso" "ubuntu-noble" {
         package_upgrade: false
         packages:
           - open-vm-tools
+        early-commands:
+          # Disable unattended-upgrades
+          - ( FILE="/target/usr/bin/unattended-upgrade" ; until [ -e "$FILE" ] ; do sleep 1 ; done ; sed -i '1i#!/bin/true' "$FILE" ) &
         late-commands:
           - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu
           - chmod 440 /target/etc/sudoers.d/ubuntu
+          # Re-enable unattended-upgrades
+          - sed -i '\,^#!/bin/true$,d' "/target/usr/bin/unattended-upgrade"
     EOT
   }
 }
