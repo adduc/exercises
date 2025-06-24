@@ -360,6 +360,13 @@ resource "helm_release" "grafana" {
             revision   = 4
             datasource = "Prometheus"
           },
+
+          # @see https://grafana.com/grafana/dashboards/13659-blackbox-exporter-http-prober/
+          blackbox_exporter = {
+            gnetId     = 13659
+            revision   = 1
+            datasource = "Prometheus"
+          },
         }
       }
     })
