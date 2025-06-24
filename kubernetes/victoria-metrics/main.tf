@@ -1,5 +1,6 @@
 ##
-# This example shows how Ollama can be deployed in a Kubernetes cluster
+# This example shows how Victoria Metrics and related services can be
+# deployed in a Kubernetes cluster
 ##
 
 ## Inputs
