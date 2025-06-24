@@ -328,6 +328,34 @@ resource "helm_release" "grafana" {
           ]
         }
       }
+
+      dashboardProviders = {
+        "dashboardproviders.yaml" = {
+          apiVersion = 1
+          providers = [
+            {
+              name            = "default"
+              orgId           = 1
+              folder          = ""
+              type            = "file"
+              disableDeletion = false
+              editable        = true
+              options         = { path = "/var/lib/grafana/dashboards/default" }
+            }
+          ]
+        }
+      }
+
+      dashboards = {
+        default = {
+          node_exporter = {
+            # Ref: https://grafana.com/dashboards/1860
+            gnetId     = 1860
+            revision   = 41
+            datasource = "Prometheus"
+          }
+        }
+      }
     })
   ]
 }
