@@ -12,6 +12,16 @@ packer {
 
 ## Input Variables
 
+variable "hostname" {
+  type        = string
+  description = "The hostname for the VM."
+}
+
+variable "username" {
+  type        = string
+  description = "The username for the default user."
+}
+
 variable "password" {
   type        = string
   description = "The password for the default user."
@@ -35,7 +45,7 @@ source "virtualbox-iso" "ubuntu-2204" {
   iso_checksum = "sha256:9bc6028870aef3f74f4e16b900008179e78b130e6b0b9a140635434a46aa98b0"
 
   vm_name              = "Ubuntu Server 22.04.5"
-  ssh_username         = "ubuntu"
+  ssh_username         = var.username
   ssh_password         = var.password
   ssh_timeout          = "30m"
   shutdown_command     = "sudo shutdown -h now"
@@ -90,9 +100,9 @@ source "virtualbox-iso" "ubuntu-2204" {
           - sed -i '\,^#!/bin/true$,d' "/target/usr/bin/unattended-upgrade"
 
         user-data:
-          hostname: ubuntu
+          hostname: ${var.hostname}
           users:
-            - name: ubuntu
+            - name: ${var.username}
               shell: /bin/bash
               lock_passwd: false
               passwd: ${var.password_hash}
