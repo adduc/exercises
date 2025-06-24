@@ -219,31 +219,85 @@ resource "helm_release" "prometheus" {
 
       serverFiles = {
         "alerting_rules.yml" = {
-          groups = [{
-            name = "ssl_cert_expiration"
-            rules = [
-              # warn if SSL certificate expires in less than 30 days
-              {
-                alert = "SSLExpiration"
-                expr  = "(probe_ssl_earliest_cert_expiry{job=\"blackbox-exporter\"} - time()) / (60 * 60 * 24) < 30"
-                for   = "5m"
-                labels = {
-                  severity = "warning"
-                  team     = "platform"
+          groups = [
+            {
+              name = "ssl_cert_expiration"
+              rules = [
+                # warn if SSL certificate expires in less than 30 days
+                {
+                  alert = "SSLExpiration"
+                  expr  = "(probe_ssl_earliest_cert_expiry{job=\"blackbox-exporter\"} - time()) / (60 * 60 * 24) < 30"
+                  for   = "5m"
+                  labels = {
+                    severity = "warning"
+                    team     = "platform"
+                  }
+                },
+                # critical if SSL certificate expires in less than 7 days
+                {
+                  alert = "SSLExpirationCritical"
+                  expr  = "(probe_ssl_earliest_cert_expiry{job=\"blackbox-exporter\"} - time()) / (60 * 60 * 24) < 7"
+                  for   = "5m"
+                  labels = {
+                    severity = "critical"
+                    team     = "platform"
+                  }
                 }
-              },
-              # critical if SSL certificate expires in less than 7 days
-              {
-                alert = "SSLExpirationCritical"
-                expr  = "(probe_ssl_earliest_cert_expiry{job=\"blackbox-exporter\"} - time()) / (60 * 60 * 24) < 7"
-                for   = "5m"
-                labels = {
-                  severity = "critical"
-                  team     = "platform"
+              ]
+            },
+
+            # node exporter
+            {
+              name = "cpu_usage"
+              rules = [
+                # warn if node CPU usage is above 80% for 5 minutes
+                {
+                  alert = "NodeHighCPUUsage"
+                  expr  = "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100) > 80"
+                  for   = "5m"
+                  labels = {
+                    severity = "warning"
+                    team     = "platform"
+                  }
+                },
+                # critical if node CPU usage is above 90% for 5 minutes
+                {
+                  alert = "NodeCriticalCPUUsage"
+                  expr  = "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100) > 90"
+                  for   = "5m"
+                  labels = {
+                    severity = "critical"
+                    team     = "platform"
+                  }
                 }
-              }
-            ]
-          }]
+              ]
+            },
+            {
+              name = "memory_usage"
+              rules = [
+                # warn if node memory usage is above 80% for 5 minutes
+                {
+                  alert = "NodeHighMemoryUsage"
+                  expr  = "1 - (node_memory_MemFree_bytes / node_memory_MemTotal_bytes) > 0.8"
+                  for   = "5m"
+                  labels = {
+                    severity = "warning"
+                    team     = "platform"
+                  }
+                },
+                # critical if node memory usage is above 90% for 5 minutes
+                {
+                  alert = "NodeCriticalMemoryUsage"
+                  expr  = "1 - (node_memory_MemFree_bytes / node_memory_MemTotal_bytes) > 0.9"
+                  for   = "5m"
+                  labels = {
+                    severity = "critical"
+                    team     = "platform"
+                  }
+                }
+              ]
+            }
+          ]
         }
       }
     })
