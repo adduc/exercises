@@ -175,6 +175,16 @@ resource "helm_release" "prometheus" {
 
       extraScrapeConfigs = yamlencode(
         [
+
+          # alertmanager
+          {
+            job_name     = "alertmanager"
+            metrics_path = "/metrics"
+            static_configs = [{
+              targets = ["prometheus-alertmanager:9093"]
+            }]
+          },
+
           # blackbox exporter
           {
             job_name     = "blackbox-exporter"
