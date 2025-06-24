@@ -310,6 +310,24 @@ resource "helm_release" "grafana" {
     yamlencode({
       adminUser     = "admin"
       adminPassword = "admin"
+
+      ## Configure grafana datasources
+      ## ref: http://docs.grafana.org/administration/provisioning/#datasources
+      ##
+      datasources = {
+        "datasources.yaml" = {
+          apiVersion = 1
+          datasources = [
+            {
+              name      = "Prometheus"
+              type      = "prometheus"
+              url       = "http://prometheus-server"
+              access    = "proxy"
+              isDefault = true
+            },
+          ]
+        }
+      }
     })
   ]
 }
