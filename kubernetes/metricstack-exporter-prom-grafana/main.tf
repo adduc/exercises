@@ -348,12 +348,18 @@ resource "helm_release" "grafana" {
 
       dashboards = {
         default = {
+          # @see https://grafana.com/grafana/dashboards/1860-node-exporter-full/
           node_exporter = {
-            # Ref: https://grafana.com/dashboards/1860
             gnetId     = 1860
             revision   = 41
             datasource = "Prometheus"
-          }
+          },
+          # @see https://grafana.com/grafana/dashboards/9578-alertmanager/
+          alert_manager = {
+            gnetId     = 9578
+            revision   = 4
+            datasource = "Prometheus"
+          },
         }
       }
     })
