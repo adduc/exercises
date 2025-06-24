@@ -115,11 +115,47 @@ resource "kubectl_manifest" "gateway" {
 }
 
 ##
+# Blackbox Exporter: A Prometheus exporter to probe endpoints over
+# HTTP, HTTPS, DNS, TCP, ICMP, and more.
+#
+# @see https://github.com/prometheus/blackbox_exporter
+# @see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-blackbox-exporter
+##
+resource "helm_release" "blackbox_exporter" {
+  name       = "blackbox-exporter"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  chart      = "prometheus-blackbox-exporter"
+  version    = "11.0.0"
+
+  values = [
+    # @see https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-blackbox-exporter/values.yaml
+    yamlencode({
+      fullnameOverride = "blackbox"
+
+      config = {
+        # This is the default module list, but we can customize it as
+        # needed (e.g. to add a module to test DNS, or TCP connections).
+        modules = {
+          http_2xx = {
+            prober  = "http"
+            timeout = "5s"
+            http = {
+              valid_http_versions   = ["HTTP/1.1", "HTTP/2.0"]
+              follow_redirects      = true
+              preferred_ip_protocol = "ip4"
+            }
+          }
+        }
+      }
+    })
+  ]
+}
+
+##
 # Prometheus: A powerful open-source monitoring and alerting toolkit.
 # @see https://prometheus.io/
 # @see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus
 ##
-
 resource "helm_release" "prometheus" {
   name       = "prometheus"
   repository = "https://prometheus-community.github.io/helm-charts"
@@ -136,6 +172,41 @@ resource "helm_release" "prometheus" {
       kube-state-metrics = {
         enabled = false
       }
+
+      extraScrapeConfigs = yamlencode(
+        [
+          # blackbox exporter
+          {
+            job_name     = "blackbox-exporter"
+            metrics_path = "/probe"
+            params = {
+              module = ["http_2xx"]
+            }
+            # List of endpoints to probe
+            static_configs = [{
+              targets = ["https://example.com"]
+            }]
+            relabel_configs = [
+              {
+                source_labels = ["__address__"]
+                target_label  = "__param_target"
+              },
+              {
+                source_labels = ["__param_target"]
+                target_label  = "instance"
+              },
+
+              # This relabel is required, and tells Prometheus to send
+              # the request for each target to the blackbox exporter
+              # service, which will then probe the target.
+              {
+                target_label = "__address__"
+                replacement  = "blackbox:9115"
+              },
+            ]
+          },
+        ]
+      ),
     })
   ]
 }
@@ -211,7 +282,6 @@ resource "kubectl_manifest" "http_route_alertmanager" {
     helm_release.gateway-api
   ]
 }
-
 
 ##
 # Grafana: visualization platform for observability and data analytics
