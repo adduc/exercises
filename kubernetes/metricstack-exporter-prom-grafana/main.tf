@@ -175,7 +175,6 @@ resource "helm_release" "prometheus" {
 
       extraScrapeConfigs = yamlencode(
         [
-
           # alertmanager
           {
             job_name     = "alertmanager"
@@ -217,6 +216,36 @@ resource "helm_release" "prometheus" {
           },
         ]
       ),
+
+      serverFiles = {
+        "alerting_rules.yml" = {
+          groups = [{
+            name = "ssl_cert_expiration"
+            rules = [
+              # warn if SSL certificate expires in less than 30 days
+              {
+                alert = "SSLExpiration"
+                expr  = "(probe_ssl_earliest_cert_expiry{job=\"blackbox-exporter\"} - time()) / (60 * 60 * 24) < 30"
+                for   = "5m"
+                labels = {
+                  severity = "warning"
+                  team     = "platform"
+                }
+              },
+              # critical if SSL certificate expires in less than 7 days
+              {
+                alert = "SSLExpirationCritical"
+                expr  = "(probe_ssl_earliest_cert_expiry{job=\"blackbox-exporter\"} - time()) / (60 * 60 * 24) < 7"
+                for   = "5m"
+                labels = {
+                  severity = "critical"
+                  team     = "platform"
+                }
+              }
+            ]
+          }]
+        }
+      }
     })
   ]
 }
