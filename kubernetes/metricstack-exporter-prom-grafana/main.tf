@@ -452,6 +452,10 @@ resource "helm_release" "grafana" {
           },
         }
       }
+
+      persistence = {
+        enabled = true
+      }
     })
   ]
 }
