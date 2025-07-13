@@ -1,0 +1,8 @@
+# Packer build artifacts
+/output/
+
+# Packer variables
+/*.auto.pkrvars.hcl
+
+# Packer debug log (useful for troubleshooting)
+/packer.log
