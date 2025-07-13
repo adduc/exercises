@@ -49,6 +49,10 @@ variable "vcenter_network" {
   type        = string
   description = "The vCenter network."
 }
+variable "insecure_connection" {
+  type        = bool
+  description = "Whether to allow insecure connections to vCenter."
+}
 
 ## Build Configuration
 
@@ -61,7 +65,7 @@ source "vsphere-iso" "ubuntu-noble" {
   password            = var.vcenter_password
   cluster             = var.vcenter_cluster
   datastore           = var.vcenter_datastore
-  insecure_connection = true
+  insecure_connection = var.insecure_connection
 
   vm_name      = "Ubuntu Server 24.04.2"
   RAM          = 4096
@@ -126,6 +130,12 @@ source "vsphere-iso" "ubuntu-noble" {
     EOT
   }
 
+  # It can take some time for vCenter to recognize VMWare Tools are
+  # installed, which the builder relies on to shutdown the VM after
+  # installation. To prevent this type of error, we can use a shutdown
+  # command over SSH to ensure the VM gracefully shuts down after SSH
+  # is available.
+  shutdown_command = "echo '${var.vm_password}' | sudo -S shutdown -P now"
 }
 
 build {

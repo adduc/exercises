@@ -45,12 +45,3 @@ make init
 # Build the VM image
 make build
 ```
-
-## Notes
-
-Builds appear to randomly fail during shutdown with the following error:
-
-```plaintext
-error shutting down virtual machine: ServerFaultCode: Cannot complete
-operation because VMware Tools is not running in this virtual machine.
-```
