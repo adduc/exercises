@@ -3,12 +3,12 @@ TF_CMD := terraform
 help: ## Show this help message
 	@grep -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
-run: ## Start the k3s cluster and apply the ollama example
+run: ## Start the k3s cluster and apply the example
 	$(MAKE) start
 	$(TF_CMD) init
 	$(TF_CMD) apply -auto-approve
 
-start: ## Start the k3s cluster (does not create the ollama example)
+start: ## Start the k3s cluster (does not create the example)
 	docker compose up -d --wait
 
 stop: ## Stop the k3s cluster

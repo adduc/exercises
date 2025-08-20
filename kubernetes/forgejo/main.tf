@@ -12,6 +12,7 @@ variable "forgejo_username" {
 variable "forgejo_password" {
   description = "Password for the Forgejo admin account"
   type        = string
+  sensitive   = true
 }
 
 variable "forgejo_email" {
