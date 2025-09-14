@@ -12,7 +12,6 @@
   gather_facts: false
 
   vars:
-    playbook_dir: "{{ playbook_dir | default(ansible_playbook_dir) }}"
     qcow2_file_path: "nocloud_alpine-3.22.1-x86_64-bios-tiny-r0.qcow2"
     vmdk_file_path: "nocloud_alpine-3.22.1-x86_64-bios-tiny-r0.vmdk"
     image_url: "https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/cloud/{{ qcow2_file_path }}"
@@ -30,8 +29,8 @@
           ansible.builtin.get_url:
             # @see https://alpinelinux.org/cloud/
             url: "{{ image_url }}"
-            dest: "{{ playbook_dir}}/{{ qcow2_file_path }}"
+            dest: "{{ ansible_playbook_dir}}/{{ qcow2_file_path }}"
 
         - name: Convert qcow2 to vmdk
           ansible.builtin.command:
-            cmd: qemu-img convert -f qcow2 -o subformat=streamOptimized -O vmdk "{{ playbook_dir }}/{{ qcow2_file_path }}" "{{ playbook_dir }}/{{ vmdk_file_path }}"
+            cmd: qemu-img convert -f qcow2 -o subformat=streamOptimized -O vmdk "{{ ansible_playbook_dir }}/{{ qcow2_file_path }}" "{{ playbook_dir }}/{{ vmdk_file_path }}"
