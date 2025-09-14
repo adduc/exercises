@@ -120,8 +120,42 @@ resource "helm_release" "nginx-gateway-fabric" {
 
 # Example resources to demonstrate the use of Gateway API
 
+resource "kubectl_manifest" "issuer" {
+  depends_on = [helm_release.cert_manager]
+  yaml_body = yamlencode({
+    apiVersion = "cert-manager.io/v1"
+    kind       = "Issuer"
+    metadata = {
+      name = "selfsigned-issuer"
+    }
+    spec = {
+      selfSigned = {}
+    }
+  })
+}
+
+# certificate
+
+resource "kubectl_manifest" "certificate" {
+  depends_on = [kubectl_manifest.issuer]
+  yaml_body = yamlencode({
+    apiVersion = "cert-manager.io/v1"
+    kind       = "Certificate"
+    metadata = {
+      name = "example-cert"
+    }
+    spec = {
+      secretName = "example-cert-tls"
+      dnsNames   = ["localhost"]
+      issuerRef = {
+        name = "selfsigned-issuer"
+      }
+    }
+  })
+}
+
 resource "kubectl_manifest" "gateway" {
-  depends_on = [helm_release.nginx-gateway-fabric]
+  depends_on = [helm_release.nginx-gateway-fabric, kubectl_manifest.certificate]
   yaml_body = yamlencode({
     apiVersion = "gateway.networking.k8s.io/v1"
     kind       = "Gateway"
@@ -140,6 +174,14 @@ resource "kubectl_manifest" "gateway" {
           name     = "https"
           protocol = "HTTPS"
           port     = 443
+          tls = {
+            mode = "Terminate"
+            certificateRefs = [
+              {
+                name = "example-cert-tls"
+              }
+            ]
+          }
         }
       ]
     }
@@ -158,7 +200,12 @@ resource "kubectl_manifest" "httproute" {
     spec = {
       parentRefs = [
         {
-          name = "nginx-gateway"
+          name        = "nginx-gateway"
+          sectionName = "http"
+        },
+        {
+          name        = "nginx-gateway"
+          sectionName = "https"
         }
       ]
       rules = [
