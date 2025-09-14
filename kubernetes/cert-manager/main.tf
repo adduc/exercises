@@ -188,7 +188,6 @@ resource "kubectl_manifest" "gateway" {
   })
 }
 
-
 resource "kubectl_manifest" "httproute" {
   depends_on = [kubectl_manifest.gateway]
   yaml_body = yamlencode({
