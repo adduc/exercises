@@ -77,7 +77,6 @@ data "cloudflare_zone" "zone" {
   }
 }
 
-# @todo create cloudflare resources to create the tunnel and its routes
 
 resource "cloudflare_zero_trust_tunnel_cloudflared" "tunnel" {
   account_id = var.cloudflare_account_id
