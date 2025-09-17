@@ -1,0 +1,20 @@
+# k3s data
+/data
+
+# generated kubeconfig file
+/kubeconfig.yaml
+
+# Terraform providers
+/.terraform
+
+# Terraform state
+/terraform.tfstate
+/terraform.tfstate.*.backup
+/terraform.tfstate.backup
+/.terraform.lock.hcl
+
+# Terraform variables
+/*.tfvars
+
+# Terraform lock info
+/.terraform.tfstate.lock.info
