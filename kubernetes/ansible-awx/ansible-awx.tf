@@ -1,6 +1,6 @@
 ##
-# This example shows how Cert Manager can be deployed in a Kubernetes
-# cluster
+# This example shows how AWX (Ansible AWX and its operator) can be deployed in a Kubernetes
+# cluster using Terraform, Helm, and Kubectl providers.
 ##
 
 ## Inputs
