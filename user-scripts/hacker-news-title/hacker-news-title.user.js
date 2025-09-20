@@ -22,12 +22,16 @@
         }
     };
 
-    const observer = new MutationObserver(checkForTitle);
-
     const pageEl = document.querySelector('.pages-container');
+    if (!pageEl) {
+        console.warn('HN Title Catcher: No page element found, aborting.');
+        return;
+    }
+
+    const observer = new MutationObserver(checkForTitle);
     observer.observe(pageEl, {
         childList: true,
         subtree: true
     });
-    checkForTitle([], observer);
+    checkForTitle();
 })();
