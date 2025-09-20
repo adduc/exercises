@@ -21,7 +21,7 @@ variable "k3s_image" { default = "rancher/k3s" }
 variable "k3s_version" {
   # @see https://github.com/k3s-io/k3s/releases
   type    = string
-  default = "v1.33.0-k3s1"
+  default = "v1.33.4-k3s1"
 }
 
 variable "k3s_token" { default = "changeme" }
