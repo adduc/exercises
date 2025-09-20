@@ -13,7 +13,7 @@ terraform {
 
 resource "docker_container" "k3s" {
   name        = "gitlab-k3s"
-  image       = "rancher/k3s:v1.33.0-k3s1"
+  image       = "rancher/k3s:v1.33.4-k3s1"
   restart     = "unless-stopped"
   stop_signal = "SIGKILL"
   privileged  = true

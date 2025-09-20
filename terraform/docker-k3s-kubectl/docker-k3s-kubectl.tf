@@ -48,7 +48,7 @@ provider "kubectl" {
 
 resource "docker_container" "k3s" {
   name       = "k3s"
-  image      = "rancher/k3s:v1.32.1-k3s1"
+  image      = "rancher/k3s:v1.33.4-k3s1"
   restart    = "unless-stopped"
   privileged = true
 
