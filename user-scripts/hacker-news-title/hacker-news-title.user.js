@@ -5,24 +5,28 @@
 // @run-at           document-idle
 // ==/UserScript==
 
+const MAX_TITLE_LENGTH = 50;
+const TITLE_SELECTOR = '.page-comments .title';
+const PAGE_SELECTOR = '.pages-container';
+
 (() => {
     const setTitle = (title) => {
-        if (title.length > 50) {
-            title = title.substring(0, 50) + "...";
+        if (title.length > MAX_TITLE_LENGTH) {
+            title = title.substring(0, MAX_TITLE_LENGTH) + "...";
         }
 
         document.title = title + " | HN";
     };
 
     const checkForTitle = () => {
-        const titleEl = document.querySelector('.page-comments .title');
+        const titleEl = document.querySelector(TITLE_SELECTOR);
 
         if (titleEl) {
             setTitle(titleEl.innerText);
         }
     };
 
-    const pageEl = document.querySelector('.pages-container');
+    const pageEl = document.querySelector(PAGE_SELECTOR);
     if (!pageEl) {
         console.warn('HN Title Catcher: No page element found, aborting.');
         return;
