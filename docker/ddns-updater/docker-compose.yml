@@ -1,0 +1,29 @@
+services:
+  ddns-updater:
+    image: qmcgaw/ddns-updater:v2
+    restart: unless-stopped
+    user: "0:0"
+    ports:
+      - 8000:8000/tcp
+    volumes:
+      - ./data:/updater/data
+    environment:
+      RESOLVER_ADDRESS: "1.1.1.1:53"
+    configs:
+      - source: ddns-updater-config
+        target: /updater/data/config.json
+
+configs:
+  ddns-updater-config:
+    content: |
+      {
+        "settings": [
+          {
+            "provider": "porkbun",
+            "domain": "${DDNS_DOMAIN}",
+            "api_key": "${PORKBUN_API_KEY}",
+            "secret_api_key": "${PORKBUN_API_SECRET}",
+            "ip_version": "ipv4"
+          }
+        ]
+      }
