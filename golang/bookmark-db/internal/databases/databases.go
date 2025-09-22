@@ -16,7 +16,7 @@ var databases struct {
 func NewDefaultDB() (*gorm.DB, error) {
 	// TODO: use config to determine database connection parameters
 	// TODO: optimize SQLite connection
-	return gorm.Open(sqlite.Open("db.sqlite"), &gorm.Config{})
+	return gorm.Open(sqlite.Open("db.sqlite?journal_mode=WAL"), &gorm.Config{})
 }
 
 // Returns the default database connection (or creates one if it doesn't
