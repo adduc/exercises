@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./data/k3s-server:/var/lib/rancher/k3s
-      - ./data/persistent-volumes:/opt/local-path-provisioner
+      - ./data/persistent-volumes:/var/lib/rancher/k3s/storage
       - .:/output
     ports:
       - 6443:6443    # Kubernetes API Server
