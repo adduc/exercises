@@ -184,12 +184,14 @@ resource "kubectl_manifest" "ddns_updater_service" {
         app = "ddns-updater"
       }
       ports = [
-        {
-          port       = 80
-          targetPort = 8000
-          nodePort   = var.service_type == "NodePort" ? var.node_port : null
-          protocol   = "TCP"
-        }
+        merge(
+          {
+            port       = 80
+            targetPort = 8000
+            protocol   = "TCP"
+          },
+          var.service_type == "NodePort" ? { nodePort = var.node_port } : {}
+        )
       ]
     }
   })
