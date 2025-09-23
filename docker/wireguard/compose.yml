@@ -1,0 +1,19 @@
+services:
+  wireguard:
+    image: linuxserver/wireguard:1.0.20250521
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      PEERS: ${WG_PEERS}
+      SERVERURL: ${WG_SERVER_URL}
+      PEERDNS: ${WG_PEER_DNS}
+      ALLOWEDIPS: ${WG_ALLOWED_IPS}
+      INTERNAL_SUBNET: ${WG_INTERNAL_SUBNET}
+    volumes:
+      - ./config:/config
+      - /lib/modules:/lib/modules:ro
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    ports:
+      - 51820:51820/udp
