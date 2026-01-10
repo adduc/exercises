@@ -1,0 +1,5 @@
+# Packer build artifacts
+/output/
+
+# Packer variables
+/ubuntu.auto.pkrvars.hcl
