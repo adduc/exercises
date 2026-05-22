@@ -1,0 +1,131 @@
+all:
+  hosts:
+    localhost:
+
+      # Ensures ansible runs tasks on this host directly instead of over SSH
+      ansible_connection: local
+      ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+      # Which vCenter cluster to connect to
+      vcenter_hostname: vcenter.example.com
+      vcenter_validate_certs: false
+
+      # Credentials to use when interacting with vCenter
+      vcenter_username: administrator@vsphere.local
+      vcenter_password: your-vcenter-password
+
+      # Where the VM templates and VMs should be placed
+      vcenter_cluster: YourCluster
+      vcenter_datacenter: Datacenter
+      vcenter_datastore: datastore1
+
+      # Where to download the Alpine Linux cloud image to before importing
+      # into vSphere
+      path_local: "{{ playbook_dir }}"
+      path_tmp: "/tmp"
+
+      # Ubuntu Cloud Images are the official Ubuntu images that have been
+      # customised by Canonical to run on clouds, QEMU, and other virtualization
+      # hosts (like vCenter)
+
+      # Where the Alpine Linux cloud image can be downloaded from
+      os_image_base_url: "https://dl-cdn.alpinelinux.org/alpine/"
+      os_image_release: "3.23"
+      os_image_version: "3.23.4"
+      os_image_filename: "nocloud_alpine-{{ os_image_version }}-x86_64-uefi-cloudinit-r0.qcow2"
+
+      os_image_src: "{{ '%s/v%s/releases/cloud/%s' % (os_image_base_url, os_image_release, os_image_filename) }}"
+
+      os_image_dest: "{{ path_local }}/{{ os_image_filename }}"
+      os_image_download_timeout: 1200
+      os_image_disk_size: "2G"
+
+      os_vmdk_filename: "nocloud_alpine-{{ os_image_version }}-x86_64-uefi-cloudinit-r0.vmdk"
+      os_vmdk_dest: "{{ path_tmp }}/{{ os_vmdk_filename }}"
+
+      os_ovf_filename: "nocloud_alpine-{{ os_image_version }}-x86_64-uefi-cloudinit-r0.ovf"
+      os_ovf_dest: "{{ path_tmp }}/{{ os_ovf_filename }}"
+
+      # Where the Alpine Cloud image template VM should be placed
+      templates_folder: "Templates"
+      templates_folder_path: "{{ vcenter_datacenter }}/vm/{{ templates_folder }}"
+
+      # vSphere portgroup to attach the template NIC to during import
+      vcenter_network: "VM Network"
+
+      # Alpine Cloud template VM settings
+      template_os_name: "Alpine-3.23-Template"
+
+      # Golden Image Template VM settings
+      template_golden_name: "Alpine-3.23-Golden"
+      template_golden_cidata_iso_name: "cidata.iso"
+      template_golden_metadata_local: "{{ path_tmp }}/meta-data"
+      template_golden_userdata_local: "{{ path_tmp }}/user-data"
+      template_golden_cidata_iso_local: "{{ path_tmp }}/{{ template_golden_cidata_iso_name }}"
+      template_golden_cidata_iso_datastore_path: "{{ templates_folder }}/{{ template_golden_name }}/{{ template_golden_cidata_iso_name }}"
+      template_golden_userdata: |
+        #cloud-config
+        hostname: {{ template_golden_name }}
+        timezone: UTC
+        package_update: true
+        package_upgrade: true
+        packages:
+          - open-vm-tools
+          # Needed for IP discovery to work in vCenter
+          # @see https://wiki.alpinelinux.org/wiki/Open-vm-tools
+          - open-vm-tools-guestinfo
+          # Needed for key-based SSH to work with cloud-init managed users
+          # (cloud-init locks passwords by default; openssh refuses key auth
+          # for locked accounts unless PAM is enabled)
+          - openssh-server-pam
+
+        chpasswd:
+          expire: false
+          users:
+            - name: alpine
+              password: ""
+
+        user:
+          name: alpine
+          shell: /bin/sh
+          lock_passwd: false
+          passwd: ""
+          doas: [permit nopass alpine as root]
+          ssh_authorized_keys:
+            - ssh-ed25519 AAAA... your-ansible-ssh-public-key
+
+        runcmd:
+          # Required or users without passwords won't be able to log in via SSH
+          - grep -q '^UsePAM' /etc/ssh/sshd_config && sed -i 's/^UsePAM.*/UsePAM yes/' /etc/ssh/sshd_config || echo 'UsePAM yes' >> /etc/ssh/sshd_config
+          - rc-update add open-vm-tools boot
+          - rc-service open-vm-tools start
+          - cloud-init clean --logs --machine-id --configs all --seed
+          - rm /etc/ssh/ssh_host_*
+
+        power_state:
+          mode: poweroff
+
+      # Where to place example VMs
+      examples_folder: "Examples"
+      examples_folder_path: "{{ vcenter_datacenter }}/vm/{{ examples_folder }}"
+
+      # Example VM settings
+      vm_example_name: "Example-VM"
+      vm_example_cidata_iso_name: "cidata.iso"
+      vm_example_metadata_local: "{{ path_tmp }}/meta-data"
+      vm_example_userdata_local: "{{ path_tmp }}/user-data"
+      vm_example_cidata_iso_local: "{{ path_tmp }}/{{ vm_example_cidata_iso_name }}"
+      vm_example_cidata_iso_datastore_path: "{{ examples_folder }}/{{ vm_example_name }}/{{ vm_example_cidata_iso_name }}"
+      vm_example_userdata: |
+        #cloud-config
+        hostname: {{ vm_example_name }}
+        package_update: true
+        package_upgrade: false
+        users:
+          - name: your-username
+            shell: /bin/sh
+            lock_passwd: false
+            passwd: ""
+            doas: [permit nopass your-username as root]
+            ssh_authorized_keys:
+              - ssh-ed25519 AAAA... your-ssh-public-key

@@ -1,0 +1,111 @@
+---
+- name: Create Example VM from Alpine template
+  hosts: localhost
+  gather_facts: false
+  vars:
+    vcenter_auth: &vcenter_auth
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: "{{ vcenter_validate_certs }}"
+
+  tasks:
+
+    - name: Reset environment
+      block:
+
+        - name: Ensure Example VM folder exists
+          vmware.vmware.folder:
+            <<: *vcenter_auth
+            datacenter: "{{ vcenter_datacenter }}"
+            relative_path: "{{ examples_folder }}"
+            folder_type: "vm"
+            state: present
+
+        - name: Delete Example VM (if exists)
+          community.vmware.vmware_guest:
+            <<: *vcenter_auth
+            name: "{{ vm_example_name }}"
+            folder: "{{ examples_folder_path }}"
+            state: absent
+            force: true
+
+    - name: Prepare cloud-init data
+      block:
+
+        - name: Create cloud-init meta-data
+          ansible.builtin.copy:
+            content: |
+              instance-id: {{ vm_example_name }}
+              local-hostname: {{ vm_example_name }}
+            dest: "{{ vm_example_metadata_local }}"
+            mode: '0644'
+
+        - name: Create cloud-init user-data
+          ansible.builtin.copy:
+            content: "{{ vm_example_userdata }}"
+            dest: "{{ vm_example_userdata_local }}"
+            mode: '0644'
+
+        - name: Create cloud-init seed ISO (cidata)
+          ansible.builtin.command:
+            cmd: >
+              genisoimage
+              -output {{ vm_example_cidata_iso_local }}
+              -volid cidata
+              -joliet -rock
+              {{ vm_example_metadata_local }}
+              {{ vm_example_userdata_local }}
+          register: iso_result
+          changed_when: iso_result.rc == 0
+          failed_when: iso_result.rc != 0
+
+        - name: Upload cloud-init ISO to datastore
+          community.vmware.vsphere_copy:
+            <<: *vcenter_auth
+            datacenter: "{{ vcenter_datacenter }}"
+            datastore: "{{ vcenter_datastore }}"
+            src: "{{ vm_example_cidata_iso_local }}"
+            path: "{{ vm_example_cidata_iso_datastore_path }}"
+
+    - name: Clone VM from template
+      community.vmware.vmware_guest:
+        <<: *vcenter_auth
+        datacenter: "{{ vcenter_datacenter }}"
+        cluster: "{{ vcenter_cluster }}"
+        datastore: "{{ vcenter_datastore }}"
+        name: "{{ vm_example_name }}"
+        folder: "{{ examples_folder_path }}"
+        template: "{{ template_golden_name }}"
+        cdrom:
+          - controller_type: sata
+            controller_number: 0
+            unit_number: 0
+            type: iso
+            iso_path: "[{{ vcenter_datastore }}] {{ vm_example_cidata_iso_datastore_path }}"
+            state: present
+        state: poweredon
+
+    - name: Wait for VM to report an IPv4
+      block:
+
+        - name: Wait for VMware Tools to be running
+          community.vmware.vmware_guest_tools_wait:
+            <<: *vcenter_auth
+            name: "{{ vm_example_name }}"
+            folder: "{{ examples_folder_path }}"
+
+        - name: Gather VM facts (retry until IPv4 is available)
+          community.vmware.vmware_guest_info:
+            <<: *vcenter_auth
+            datacenter: "{{ vcenter_datacenter }}"
+            name: "{{ vm_example_name }}"
+            folder: "{{ examples_folder_path }}"
+          register: vm_info
+          until: vm_info.instance.ipv4 | default('', true) | length > 0
+          retries: 30
+          delay: 10
+
+        - name: Print VM IPv4 address
+          ansible.builtin.debug:
+            msg: "{{ vm_example_name }} IPv4: {{ vm_info.instance.ipv4 }}"

@@ -1,0 +1,5 @@
+# dependencies managed by ansible-galaxy
+vendor
+
+# ansible inventory
+inventory.yml
