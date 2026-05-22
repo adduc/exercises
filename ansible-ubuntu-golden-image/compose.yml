@@ -1,0 +1,19 @@
+services:
+  ansible:
+    build: .
+    working_dir: /etc/ansible
+    volumes:
+      - ./:/etc/ansible
+    configs:
+      - source: ash_history
+        target: /home/ansible/.ash_history
+
+configs:
+  ash_history:
+    content: |
+      ansible-lint
+      ansible-galaxy install -r requirements.yml
+      ansible-playbook playbooks/import-ubuntu-ova-to-template.yml --diff
+      ansible-playbook playbooks/import-ubuntu-ova-to-template.yml --diff --check
+      ansible-playbook playbooks/create-vm-from-template.yml --diff
+      ansible-playbook playbooks/create-vm-from-template.yml --diff --check

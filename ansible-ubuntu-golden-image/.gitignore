@@ -1,0 +1,8 @@
+# dependencies managed by ansible-galaxy
+vendor
+
+playbooks/*.ova
+playbooks/*SUMS
+
+# Ansible inventory file
+inventory.yml

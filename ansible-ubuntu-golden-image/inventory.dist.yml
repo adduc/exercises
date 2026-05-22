@@ -1,0 +1,91 @@
+all:
+  hosts:
+    localhost:
+
+      # Ensures ansible runs tasks on this host directly instead of over SSH
+      ansible_connection: local
+      ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+      # Which vCenter cluster to connect to
+      vcenter_hostname: 192.168.1.100
+      vcenter_validate_certs: false
+
+      # Credentials to use when interacting with vCenter
+      vcenter_username: administrator@vsphere.local
+      vcenter_password: changeme
+
+      # Where the VM templates and VMs should be placed
+      vcenter_cluster: YourClusterName
+      vcenter_datacenter: Datacenter
+      vcenter_datastore: datastore1
+
+      # Where to download the checksum and OVF image from
+      ubuntu_base_url: "https://cloud-images.ubuntu.com/noble/current"
+
+      # Where to download the checksum and OVF image (locally)
+      local_path: "{{ playbook_dir }}"
+
+      # Checksums are used to determine if the Ubuntu OVF template needs
+      # to be updated
+      checksums_attribute: "ansible_ova_checksum"
+      checksums_filename: "SHA256SUMS"
+      checksums_src: "{{ ubuntu_base_url }}/{{ checksums_filename }}"
+      checksums_download_timeout: 60
+
+      # Ubuntu Cloud Images are the official Ubuntu images that have been
+      # customised by Canonical to run on clouds, QEMU, and other virtualization
+      # hosts (like vCenter)
+      ova_filename: "noble-server-cloudimg-amd64.ova"
+      ova_src: "{{ ubuntu_base_url }}/{{ ova_filename }}"
+      ova_dest: "{{ local_path }}/{{ ova_filename }}"
+      ova_download_timeout: 1200
+
+      # Where the Ubuntu Cloud Image template VM should be placed
+      templates_folder: "Templates"
+      templates_folder_path: "{{ vcenter_datacenter }}/vm/{{ templates_folder }}"
+
+      # Ubuntu Template VM settings
+      template_ubuntu_name: "Ubuntu-2404-Template"
+
+      # Golden Image Template VM settings
+      template_golden_name: "Ubuntu-2404-Golden"
+      template_golden_userdata: |
+        #cloud-config
+        hostname: {{ template_golden_name }}
+        timezone: America/Chicago
+        package_update: true
+        package_upgrade: false
+        users:
+          - name: ubuntu
+            groups: sudo
+            shell: /bin/bash
+            sudo: ALL=(ALL) NOPASSWD:ALL
+            ssh_authorized_keys:
+              - ssh-ed25519 AAAA... your-ansible-public-key
+
+        runcmd:
+          - cloud-init clean --logs --machine-id --configs all --seed
+
+        power_state:
+          mode: poweroff
+
+      # Where to place example VMs
+      examples_folder: "Examples"
+      examples_folder_path: "{{ vcenter_datacenter }}/vm/{{ examples_folder }}"
+
+      # Example VM settings
+      vm_example_name: "Example-VM"
+      # new_vm_network: "VM Network"
+      vm_example_userdata: |
+        #cloud-config
+        hostname: {{ vm_example_name }}
+        timezone: America/Chicago
+        package_update: true
+        package_upgrade: false
+        users:
+          - name: your-username
+            groups: sudo
+            shell: /bin/bash
+            sudo: ALL=(ALL) NOPASSWD:ALL
+            ssh_authorized_keys:
+              - ssh-ed25519 AAAA... your-public-key

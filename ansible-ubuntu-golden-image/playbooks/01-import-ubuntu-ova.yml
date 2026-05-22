@@ -1,0 +1,139 @@
+---
+
+- name: Importing latest Ubuntu 24.04 OVA as vSphere template VM
+  hosts: localhost
+  gather_facts: false
+  any_errors_fatal: true
+  vars:
+    vcenter_auth: &vcenter_auth
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: "{{ vcenter_validate_certs | default(true) | bool }}"
+
+  tasks:
+
+    - name: Get checksum
+      block:
+
+        - name: Fetch checksums
+          ansible.builtin.uri:
+            url: "{{ checksums_src }}"
+            return_content: true
+            timeout: "{{ checksums_download_timeout }}"
+          register: checksums_raw
+
+        - name: Extract checksum for OVA file
+          ansible.builtin.set_fact:
+            current_checksum: >-
+              {{ checksums_raw.content
+                | regex_search('([0-9a-f]{64})\s+\*' ~ ova_filename, '\1')
+                | default([])
+                | first }}
+
+        - name: Assert checksum was found
+          ansible.builtin.assert:
+            that: current_checksum | length == 64
+            fail_msg: "Could not extract checksum for {{ ova_filename }} from {{ checksums_filename }}"
+
+    - name: Check existing checksum of template (if exists)
+      block:
+
+        - name: Create custom attribute for OVA checksum
+          community.vmware.vmware_custom_attribute:
+            <<: *vcenter_auth
+            object_type: VirtualMachine
+            custom_attribute: "{{ checksums_attribute }}"
+
+        - name: Ensure VM folder exists
+          vmware.vmware.folder:
+            <<: *vcenter_auth
+            datacenter: "{{ vcenter_datacenter }}"
+            relative_path: "{{ templates_folder }}"
+            folder_type: "vm"
+            state: present
+
+        - name: Lookup template VM (if present)
+          community.vmware.vmware_guest_info:
+            <<: *vcenter_auth
+            datacenter: "{{ vcenter_datacenter }}"
+            name: "{{ template_ubuntu_name }}"
+            folder: "{{ templates_folder }}"
+          register: existing_vm_result
+
+          # If the VM does not exist, we want to treat this as a non-failure
+          # case, since it just means we need to deploy the OVA.
+          failed_when:
+            - existing_vm_result.instance is not defined
+            # Relying on a hard-coded error string is fragile, but at
+            # the moment there is no quicker way to detect if a VM
+            # exists.
+            - "'non-existing VM' not in existing_vm_result.msg | default('')"
+
+    - name: Set facts
+      ansible.builtin.set_fact:
+        checksum_mismatch: "{{ (existing_vm_result.instance is not defined or existing_vm_result.instance.customvalues[checksums_attribute]|default('') != current_checksum) | bool }}"
+        is_template: "{{ (existing_vm_result.instance is defined and existing_vm_result.instance.hw_is_template) | bool }}"
+
+    - name: Download Ubuntu 24.04 OVA
+      when: checksum_mismatch
+      ansible.builtin.get_url:
+        url: "{{ ova_src }}"
+        dest: "{{ ova_dest }}"
+        checksum: "sha256:{{ current_checksum }}"
+        mode: "0644"
+        timeout: "{{ ova_download_timeout }}"
+
+    - name: Deploy OVA
+      when: checksum_mismatch
+      block:
+
+        - name: Delete existing VM or template
+          when: existing_vm_result.instance is defined
+          community.vmware.vmware_guest:
+            <<: *vcenter_auth
+            name: "{{ template_ubuntu_name }}"
+            folder: "{{ templates_folder_path }}"
+            state: absent
+
+        - name: Deploy OVA to vSphere
+          community.vmware.vmware_deploy_ovf:
+            <<: *vcenter_auth
+            datacenter: "{{ vcenter_datacenter }}"
+            cluster: "{{ vcenter_cluster }}"
+            datastore: "{{ vcenter_datastore }}"
+            name: "{{ template_ubuntu_name }}"
+            folder: "{{ templates_folder_path }}"
+            ovf: "{{ ova_dest }}"
+            power_on: false
+            allow_duplicates: false
+
+        - name: Upgrade to latest hardware compatibility
+          community.vmware.vmware_guest:
+            <<: *vcenter_auth
+            datacenter: "{{ vcenter_datacenter }}"
+            name: "{{ template_ubuntu_name }}"
+            folder: "{{ templates_folder_path }}"
+            hardware:
+              version: latest
+              hotadd_cpu: true
+              hotadd_memory: true
+
+        - name: Set custom attribute with OVA checksum
+          community.vmware.vmware_custom_attribute_manager:
+            <<: *vcenter_auth
+            object_type: VirtualMachine
+            object_name: "{{ template_ubuntu_name }}"
+            custom_attributes:
+              - name: "{{ checksums_attribute }}"
+                value: "{{ current_checksum }}"
+
+
+    - name: Convert VM to template
+      when: checksum_mismatch or not is_template
+      community.vmware.vmware_guest:
+        <<: *vcenter_auth
+        datacenter: "{{ vcenter_datacenter }}"
+        name: "{{ template_ubuntu_name }}"
+        folder: "{{ templates_folder_path }}"
+        is_template: true
