@@ -1,0 +1,210 @@
+# - Milestone 1: Pull alpine cloud image (qcow2, cloud-init), import into vSphere
+
+- name: Importing Alpine Linux cloud image (cloud-init) into vSphere
+  hosts: localhost
+  gather_facts: false
+  any_errors_fatal: true
+  vars:
+    vcenter_auth: &vcenter_auth
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: "{{ vcenter_validate_certs | default(true) | bool }}"
+
+  tasks:
+    - name: Download Alpine Linux cloud image (cloud-init)
+      ansible.builtin.get_url:
+        url: "{{ os_image_src }}"
+        dest: "{{ os_image_dest }}"
+        timeout: "{{ os_image_download_timeout }}"
+        mode: '0644'
+      register: download_result
+
+    - name: Resize qcow2 to {{ os_image_disk_size }}
+      ansible.builtin.command:
+        cmd: "qemu-img resize {{ os_image_dest }} {{ os_image_disk_size }}"
+      register: resize_result
+      changed_when: resize_result.rc == 0
+      failed_when: resize_result.rc != 0
+
+    - name: Convert qcow2 to streamOptimized vmdk
+      ansible.builtin.command:
+        cmd: "qemu-img convert -f qcow2 -O vmdk -o subformat=streamOptimized {{ os_image_dest }} {{ os_vmdk_dest }}"
+      register: convert_result
+      changed_when: convert_result.rc == 0
+      failed_when: convert_result.rc != 0
+
+    - name: Get virtual disk size
+      ansible.builtin.command:
+        cmd: "qemu-img info --output=json {{ os_image_dest }}"
+      register: qemu_info
+      changed_when: false
+
+    - name: Set disk capacity fact
+      ansible.builtin.set_fact:
+        os_disk_capacity_bytes: "{{ (qemu_info.stdout | from_json)['virtual-size'] }}"
+
+    - name: Lookup template VM (if present)
+      community.vmware.vmware_guest_info:
+        <<: *vcenter_auth
+        datacenter: "{{ vcenter_datacenter }}"
+        name: "{{ template_os_name }}"
+        folder: "{{ templates_folder }}"
+      register: existing_vm_result
+
+      # If the VM does not exist, we want to treat this as a non-failure
+      # case, since it just means we need to deploy the OVA.
+      failed_when:
+        - existing_vm_result.instance is not defined
+        # Relying on a hard-coded error string is fragile, but at
+        # the moment there is no quicker way to detect if a VM
+        # exists.
+        - "'non-existing VM' not in existing_vm_result.msg | default('')"
+
+    - name: Delete existing VM or template
+      when: existing_vm_result.instance is defined
+      community.vmware.vmware_guest:
+        <<: *vcenter_auth
+        name: "{{ template_os_name }}"
+        folder: "{{ templates_folder_path }}"
+        state: absent
+
+    - name: Generate OVF descriptor
+      ansible.builtin.copy:
+        content: |
+          <?xml version="1.0" encoding="UTF-8"?>
+          <Envelope xmlns="http://schemas.dmtf.org/ovf/envelope/1"
+                    xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1"
+                    xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData"
+                    xmlns:vmw="http://www.vmware.com/schema/ovf"
+                    xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData">
+            <References>
+              <File ovf:href="{{ os_vmdk_filename }}" ovf:id="file1"/>
+            </References>
+            <NetworkSection>
+            <Info>Logical networks</Info>
+            <Network ovf:name="VM Network">
+              <Description>VM Network</Description>
+            </Network>
+          </NetworkSection>
+          <DiskSection>
+              <Info>Virtual disk information</Info>
+              <Disk ovf:capacity="{{ os_disk_capacity_bytes }}"
+                    ovf:capacityAllocationUnits="byte"
+                    ovf:diskId="vmdisk1"
+                    ovf:fileRef="file1"
+                    ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized"/>
+            </DiskSection>
+            <VirtualSystem ovf:id="{{ template_os_name }}">
+              <Info>Alpine Linux cloud image</Info>
+              <Name>{{ template_os_name }}</Name>
+              <OperatingSystemSection ovf:id="101" vmw:osType="other5xLinux64Guest">
+                <Info>Guest OS</Info>
+                <Description>Other Linux (64-bit)</Description>
+              </OperatingSystemSection>
+              <VirtualHardwareSection ovf:transport="com.vmware.guestInfo">
+                <Info>Virtual hardware requirements</Info>
+                <System>
+                  <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
+                  <vssd:InstanceID>0</vssd:InstanceID>
+                  <vssd:VirtualSystemIdentifier>{{ template_os_name }}</vssd:VirtualSystemIdentifier>
+                  <vssd:VirtualSystemType>vmx-19</vssd:VirtualSystemType>
+                </System>
+                <Item>
+                  <rasd:Description>Number of virtual CPUs</rasd:Description>
+                  <rasd:ElementName>1 virtual CPU(s)</rasd:ElementName>
+                  <rasd:InstanceID>1</rasd:InstanceID>
+                  <rasd:ResourceType>3</rasd:ResourceType>
+                  <rasd:VirtualQuantity>1</rasd:VirtualQuantity>
+                </Item>
+                <Item>
+                  <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+                  <rasd:Description>Memory Size</rasd:Description>
+                  <rasd:ElementName>512 MB of memory</rasd:ElementName>
+                  <rasd:InstanceID>2</rasd:InstanceID>
+                  <rasd:ResourceType>4</rasd:ResourceType>
+                  <rasd:VirtualQuantity>512</rasd:VirtualQuantity>
+                </Item>
+                <Item>
+                  <rasd:Address>0</rasd:Address>
+                  <rasd:Description>SCSI Controller</rasd:Description>
+                  <rasd:ElementName>scsiController0</rasd:ElementName>
+                  <rasd:InstanceID>3</rasd:InstanceID>
+                  <rasd:ResourceSubType>VirtualSCSI</rasd:ResourceSubType>
+                  <rasd:ResourceType>6</rasd:ResourceType>
+                </Item>
+                <Item>
+                  <rasd:AddressOnParent>0</rasd:AddressOnParent>
+                  <rasd:ElementName>disk1</rasd:ElementName>
+                  <rasd:HostResource>ovf:/disk/vmdisk1</rasd:HostResource>
+                  <rasd:InstanceID>4</rasd:InstanceID>
+                  <rasd:Parent>3</rasd:Parent>
+                  <rasd:ResourceType>17</rasd:ResourceType>
+                </Item>
+                <Item>
+                  <rasd:AddressOnParent>7</rasd:AddressOnParent>
+                  <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+                  <rasd:Connection>VM Network</rasd:Connection>
+                  <rasd:Description>VmxNet3 ethernet adapter</rasd:Description>
+                  <rasd:ElementName>ethernet0</rasd:ElementName>
+                  <rasd:InstanceID>5</rasd:InstanceID>
+                  <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
+                  <rasd:ResourceType>10</rasd:ResourceType>
+                </Item>
+                <vmw:Config ovf:required="false" vmw:key="firmware" vmw:value="efi"/>
+                <vmw:Config ovf:required="false" vmw:key="usb.present" vmw:value="false"/>
+              </VirtualHardwareSection>
+              <ProductSection ovf:required="false">
+                <Info>Cloud-Init Properties</Info>
+                <Product>Alpine Linux</Product>
+                <Property ovf:key="instance-id" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+                  <Label>Instance ID</Label>
+                  <Description>Unique instance identifier (required by cloud-init)</Description>
+                </Property>
+                <Property ovf:key="hostname" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+                  <Label>Hostname</Label>
+                  <Description>VM hostname</Description>
+                </Property>
+                <Property ovf:key="user-data" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+                  <Label>User Data</Label>
+                  <Description>Cloud-init user-data (base64 encoded)</Description>
+                </Property>
+              </ProductSection>
+            </VirtualSystem>
+          </Envelope>
+        dest: "{{ os_ovf_dest }}"
+        mode: '0644'
+
+    - name: Deploy OVF to vSphere as thin-provisioned VM
+      community.vmware.vmware_deploy_ovf:
+        <<: *vcenter_auth
+        datacenter: "{{ vcenter_datacenter }}"
+        cluster: "{{ vcenter_cluster }}"
+        datastore: "{{ vcenter_datastore }}"
+        folder: "{{ templates_folder_path }}"
+        name: "{{ template_os_name }}"
+        ovf: "{{ os_ovf_dest }}"
+        disk_provisioning: thin
+        networks:
+          "VM Network": "{{ vcenter_network }}"
+        power_on: false
+
+    - name: Upgrade to latest hardware compatibility
+      community.vmware.vmware_guest:
+        <<: *vcenter_auth
+        datacenter: "{{ vcenter_datacenter }}"
+        name: "{{ template_os_name }}"
+        folder: "{{ templates_folder_path }}"
+        hardware:
+          version: latest
+          hotadd_cpu: true
+          hotadd_memory: true
+
+    - name: Convert VM to template
+      community.vmware.vmware_guest:
+        <<: *vcenter_auth
+        datacenter: "{{ vcenter_datacenter }}"
+        name: "{{ template_os_name }}"
+        folder: "{{ templates_folder_path }}"
+        is_template: true
+        state: present

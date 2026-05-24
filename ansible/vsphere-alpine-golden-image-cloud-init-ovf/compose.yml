@@ -1,0 +1,21 @@
+services:
+  ansible:
+    build: .
+    working_dir: /etc/ansible
+    volumes:
+      - ./:/etc/ansible
+    configs:
+      - source: ash_history
+        target: /home/ansible/.ash_history
+
+configs:
+  ash_history:
+    content: |
+      ansible-lint
+      ansible-galaxy install -r requirements.yml
+      ansible-playbook --diff playbooks/01-import-alpine-cloud-image.yml
+      ansible-playbook --diff playbooks/01-import-alpine-cloud-image.yml --check
+      ansible-playbook --diff playbooks/02-golden-image.yml
+      ansible-playbook --diff playbooks/02-golden-image.yml --check
+      ansible-playbook --diff playbooks/03-example-vm.yml
+      ansible-playbook --diff playbooks/03-example-vm.yml --check

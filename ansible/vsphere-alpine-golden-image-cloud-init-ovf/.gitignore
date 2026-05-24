@@ -1,0 +1,8 @@
+# dependencies managed by ansible-galaxy
+vendor
+
+# alpine linux cloud image
+*.qcow2
+
+# ansible inventory
+inventory.yml
