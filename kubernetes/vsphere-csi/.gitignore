@@ -1,0 +1,19 @@
+# Generated kubeconfig file
+
+k3s_kubeconfig.yaml
+
+# Environment-specific variables
+
+*.auto.tfvars
+
+# Terraform-managed dependencies
+
+states/*/.terraform
+
+# Local terraform state
+
+states/*/terraform.tfstate*
+
+# Terraform dependency lock file
+# (useful to commit for production, less so for proof-of-concepts)
+states/*/.terraform.lock.hcl
