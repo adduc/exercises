@@ -3,3 +3,6 @@ vendor
 
 # ansible inventory
 inventory.yml
+
+# alpine linux cloud image
+*.qcow2
