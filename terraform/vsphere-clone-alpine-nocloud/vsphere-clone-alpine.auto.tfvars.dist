@@ -1,0 +1,15 @@
+vsphere = {
+  user                 = "user@vsphere.local"
+  password             = "password"
+  vsphere_server       = "127.0.0.1"
+  allow_unverified_ssl = false
+}
+
+cluster_name = "Cluster"
+datastore_name = "datastore"
+network_name = "network"
+template_name = "Alpine-3.23-Golden"
+folder_path = "exercises"
+vm_name = "alpine-clone"
+
+user_data_username = "example"
