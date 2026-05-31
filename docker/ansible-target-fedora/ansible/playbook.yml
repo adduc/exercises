@@ -1,0 +1,16 @@
+---
+- name: Example Playbook
+  hosts: target
+  become: true
+  tasks:
+    - name: Install nginx
+      dnf:
+        name: nginx
+        state: present
+        install_weak_deps: false
+
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+        enabled: true
