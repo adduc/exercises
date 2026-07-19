@@ -1,0 +1,29 @@
+import { Button } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    // preferred-width: 320px;
+    // preferred-height: 200px;
+    title: "Hello, Slint";
+    // default-font-family: "VecTerminus14";
+    // default-font-size: 14px;
+
+    in property <string> memory-usage-text: "";
+
+    callback check-memory-usage();
+
+    VerticalLayout {
+        alignment: center;
+        spacing: 14px;
+        padding: 14px;
+
+        Text {
+            text: memory-usage-text;
+            horizontal-alignment: center;
+        }
+
+        Button {
+            text: "Check Memory Usage";
+            clicked => { check-memory-usage(); }
+        }
+    }
+}
