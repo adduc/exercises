@@ -1,0 +1,26 @@
+services:
+  searxng:
+    image: searxng/searxng:2026.7.15-7b2199ecd
+    ports: [ "8080:8080" ]
+    volumes:
+      - ./volumes/cache:/var/cache/searxng
+    configs:
+      - source: searxng_settings
+        target: /etc/searxng/settings.yml
+
+configs:
+  searxng_settings:
+    content: |-
+      # Read the documentation before extending the defaults:
+      # https://docs.searxng.org/admin/settings/
+
+      use_default_settings: true
+
+      server:
+        secret_key: "${SEARXNG_SECRET_KEY}"
+        image_proxy: true
+
+      search:
+        formats:
+          - html
+          - json
