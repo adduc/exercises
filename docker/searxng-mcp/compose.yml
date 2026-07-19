@@ -1,0 +1,37 @@
+services:
+  # https://hub.docker.com/r/searxng/searxng/tags
+  searxng:
+    image: searxng/searxng:2026.7.15-7b2199ecd
+    ports: [ "8080:8080" ]
+    volumes:
+      - ./volumes/cache:/var/cache/searxng
+    configs:
+      - source: searxng_settings
+        target: /etc/searxng/settings.yml
+
+  # https://hub.docker.com/r/isokoliuk/mcp-searxng/tags
+  searxng-mcp:
+    image: isokoliuk/mcp-searxng:1.11
+    ports: [ "3000:3000" ]
+    environment:
+      MCP_HTTP_TRUST_PROXY: "false"
+      MCP_HTTP_PORT: 3000
+      MCP_HTTP_HOST: 0.0.0.0
+      SEARXNG_URL: http://searxng:8080
+
+configs:
+  searxng_settings:
+    content: |-
+      # Read the documentation before extending the defaults:
+      # https://docs.searxng.org/admin/settings/
+
+      use_default_settings: true
+
+      server:
+        secret_key: "${SEARXNG_SECRET_KEY}"
+        image_proxy: true
+
+      search:
+        formats:
+          - html
+          - json
