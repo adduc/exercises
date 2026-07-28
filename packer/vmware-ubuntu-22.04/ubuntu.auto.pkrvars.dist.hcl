@@ -1,0 +1,2 @@
+password      = ""
+password_hash = ""
