@@ -7,3 +7,7 @@ init: ## Initialize Packer (and install plugins if necessary)
 build: ## Build the VM image using Packer
 	packer build .
 
+
+build-debug:
+	@echo "Building VM image in debug mode..."
+	PACKER_LOG=10 PACKER_LOG_PATH=packer.log packer build .
