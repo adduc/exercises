@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Native Messaging PoC",
+  "version": "1.0",
+  "description": "Proof of concept: browser extension talking to a native messaging host over stdio.",
+  "permissions": ["nativeMessaging"],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "native-messaging-poc@adduc.example"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "com.adduc.example",
+  "description": "Example Native Messaging Host",
+  "path": "__NATIVE_HOST_PATH__",
+  "type": "stdio",
+  "allowed_extensions": ["native-messaging-poc@adduc.example"]
+}
