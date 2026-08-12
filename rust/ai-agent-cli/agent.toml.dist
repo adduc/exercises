@@ -1,0 +1,25 @@
+# Copy this file to agent.toml and adjust as needed.
+# agent.toml is gitignored (it's environment-specific and may hold a real API key);
+# this .dist file is the checked-in template documenting every supported key.
+# Every key below is optional -- anything omitted falls back to the default shown here.
+
+[llm]
+# Base URL of an OpenAI-compatible /v1/chat/completions endpoint, e.g. a local
+# llama-server (llama.cpp) instance.
+base_url = "http://localhost:8080/v1"
+
+# API key sent as a Bearer token, if the endpoint requires one. Usually not
+# needed for a local llama-server. Leave commented out to send no key.
+# Can also be set (or overridden) via the AGENT_API_KEY environment variable,
+# which takes precedence over this value -- prefer the env var if this file
+# is ever shared, since a key committed here would otherwise leak.
+# api_key = "sk-..."
+
+# Model name sent in each request. llama-server generally ignores this and
+# just serves whatever model it was started with, but some endpoints (or
+# multi-model proxies) use it for routing.
+model = "local-model"
+
+[agent]
+# System prompt prepended to every conversation.
+system_prompt = "You are a helpful assistant with access to tools. Use them when they help answer the user's question."
