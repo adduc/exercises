@@ -1,6 +1,8 @@
 use eframe::egui;
 
 #[cfg(target_os = "android")]
+mod android_insets;
+#[cfg(target_os = "android")]
 mod android_toast;
 
 #[cfg(target_os = "android")]
@@ -11,8 +13,8 @@ fn android_main(app: winit::platform::android::activity::AndroidApp) {
     );
 
     // `eframe::NativeOptions` takes ownership of `app` below, so keep our own
-    // clone to query live window insets from every frame. `AndroidApp` is a
-    // cheap `Clone` handle onto shared state, not a duplicate activity.
+    // clone to query live window insets every frame. `AndroidApp` is a cheap
+    // `Clone` handle onto shared state, not a duplicate activity.
     let android_app = app.clone();
 
     let options = eframe::NativeOptions {
@@ -59,9 +61,8 @@ fn memory_usage_string() -> Option<String> {
 
 pub struct MyApp {
     last_reading: Option<String>,
-    // Handle used to read the window's current content-area inset (the
-    // status bar height, effectively) on every frame. `eframe`/`winit` don't
-    // surface this themselves; see `ui()` below.
+    // Handle used to read the window's live status bar inset every frame;
+    // see `android_insets`. `eframe`/`winit` don't surface this themselves.
     #[cfg(target_os = "android")]
     android_app: Option<winit::platform::android::activity::AndroidApp>,
 }
@@ -82,17 +83,12 @@ impl eframe::App for MyApp {
         // defaults have shifted across OS versions (older releases already
         // excluded the status bar from the window's content area; newer
         // ones draw full-bleed under it by default), so a fixed constant
-        // can't track the real, device-specific inset. `content_rect()` is
-        // fed live by `NativeActivity.onContentRectChanged`, which reports
-        // the system's current non-obscured content area in physical
-        // pixels regardless of that default, so it stays correct across
-        // devices, rotations, and OS versions.
+        // can't track the real, device-specific inset. Query the live
+        // `WindowInsets` via JNI instead -- see `android_insets` for why
+        // that's used in preference to `android-activity`'s content-rect API.
         #[cfg(target_os = "android")]
-        {
-            let top_inset_px = self
-                .android_app
-                .as_ref()
-                .map_or(0, |app| app.content_rect().top);
+        if let Some(app) = &self.android_app {
+            let top_inset_px = android_insets::status_bar_inset_top_px(app);
             ui.add_space(top_inset_px as f32 / ui.ctx().pixels_per_point());
         }
         #[cfg(not(target_os = "android"))]
