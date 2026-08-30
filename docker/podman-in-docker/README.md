@@ -55,6 +55,41 @@ Docker's default plus a two-syscall exception scoped to the same capability
 — a much smaller blast radius than `--privileged`, which hands over roughly
 40 capabilities, full device access, and drops the syscall filter entirely.
 
+## Risk of the added `keyctl`/`pivot_root` rule
+
+The two syscalls in that rule aren't equally risky. `pivot_root` adds
+little on its own: it only rearranges which mounts a process's own mount
+namespace can see, and this container already has `mount`/`unshare`/`clone`
+via the same `CAP_SYS_ADMIN` gate, so it doesn't cross any boundary that
+wasn't already crossable.
+
+`keyctl` is different, and worth calling out on its own. It's a single
+syscall multiplexing dozens of subcommands into the kernel's key-management
+subsystem, and Docker's default profile excludes it — with no capability
+able to unlock it — specifically because that class of syscall (rich
+subcommand surface, less-audited kernel code) has a track record of
+kernel memory-safety bugs. The canonical example is
+[CVE-2016-0728](https://nvd.nist.gov/vuln/detail/CVE-2016-0728), a refcount
+overflow in the keyring code that let a local process corrupt kernel memory
+and take over kernel execution. That CVE is long patched and isn't a live
+threat to a current kernel; it's cited here as the shape of risk this rule
+reopens, not a claim that this exercise is exploitable today.
+
+The reason that shape of risk matters more than it might for other
+capability grants: a kernel exploit doesn't run "inside the container" in
+any meaningful sense. Namespaces, capabilities, and seccomp are all
+enforced by the one kernel every container shares, so hijacking kernel
+execution has no container boundary left to cross — it's already
+equivalent to code execution on the host. And on this host specifically,
+`docker info --format '{{.SecurityOptions}}'` shows no `userns` entry, so
+there isn't even a UID-remapping layer between this container's root and
+the host's: root here already is host root. The custom profile is still
+the right trade against `seccomp=unconfined` — it's the *only* extra
+syscall surface taken on, instead of every syscall Docker's default
+profile would otherwise block — but it's a trade, not a free lunch, and
+it's one this exercise accepts because there's no way to run nested Podman
+without `crun` calling `keyctl`.
+
 One thing I expected to need but didn't: `--security-opt label=disable`.
 This host runs Fedora with SELinux enforcing, and I assumed the container
 policy (`container_t`) would block Podman's mount and keyring operations
