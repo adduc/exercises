@@ -5,7 +5,7 @@ services:
     image: quay.io/podman/stable:latest
     devices: [/dev/fuse]
     cap_add: [SYS_ADMIN]
-    security_opt: [seccomp=unconfined]
+    security_opt: [seccomp=./seccomp-podman.json]
     tty: true
     stdin_open: true
     command: sleep infinity

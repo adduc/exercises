@@ -26,17 +26,34 @@ grants one at a time, in the order the failures appeared:
    profile only allows the `clone`/`unshare` syscalls to pass the combined
    namespace flags a container runtime needs (mount, PID, UTS, IPC, net
    namespaces together) when the caller already holds `CAP_SYS_ADMIN`.
-3. **`--security-opt seccomp=unconfined`** — even with `SYS_ADMIN`, Podman
-   still failed with `crun: join keyctl ... Operation not permitted`.
-   `crun` joins a new session keyring via the `keyctl` syscall, which
-   Docker's default seccomp profile blocks outright. There's no cap that
-   unblocks a single syscall — only a looser (or custom) seccomp profile
-   does.
+3. **A custom seccomp profile allowing `keyctl` and `pivot_root`** — even
+   with `SYS_ADMIN`, Podman still failed, first with
+   `crun: join keyctl ... Operation not permitted`, then (once `keyctl` was
+   allowed) with `crun: pivot_root: Operation not permitted`. Neither
+   syscall appears anywhere in Docker's default seccomp profile
+   (`moby/profiles/seccomp/default.json`), for any capability set — a
+   normal container never needs to call them, since it's `containerd`/`runc`
+   outside the container that does the equivalent setup before the
+   sandboxed process even starts. Here, though, `crun` *is* the sandboxed
+   process, doing that setup for its own nested container, so it needs
+   these itself.
 
-That's the full list. `HostConfig.Privileged` stays `false`, and the
-container only has one added capability and one added device — a much
-smaller blast radius than `--privileged`, which hands over roughly 40
-capabilities plus full device access.
+   The initial version of this exercise reached for
+   `--security-opt seccomp=unconfined` here, which works but throws away
+   the entire syscall filter — every syscall becomes permitted, not just
+   these two. [`seccomp-podman.json`](seccomp-podman.json) is Docker's
+   default profile with one rule appended, in the same shape as the
+   existing `mount`/`unshare`/`setns` rule it already ships: `keyctl` and
+   `pivot_root` are allowed only for containers that also hold
+   `CAP_SYS_ADMIN`. Everything else Docker's default profile blocks stays
+   blocked. Use it with `--security-opt seccomp=./seccomp-podman.json`
+   (paths are resolved relative to the Compose project directory).
+
+That's the full list. `HostConfig.Privileged` stays `false`, the container
+has one added capability and one added device, and the seccomp filter is
+Docker's default plus a two-syscall exception scoped to the same capability
+— a much smaller blast radius than `--privileged`, which hands over roughly
+40 capabilities, full device access, and drops the syscall filter entirely.
 
 One thing I expected to need but didn't: `--security-opt label=disable`.
 This host runs Fedora with SELinux enforcing, and I assumed the container
@@ -70,9 +87,16 @@ make down   # tear everything down
 
 ## Thoughts
 
-The two failure modes here are a useful reminder that "needs privileged"
-often means "needs one specific capability plus one specific seccomp
-allowance," not "needs everything." Reading the actual error
-(`cannot clone` vs. `join keyctl`) pointed straight at the fix each time,
-rather than reaching for `--privileged` and never finding out what was
-really being blocked.
+The failure modes here are a useful reminder that "needs privileged"
+often means "needs one specific capability plus a couple of specific
+syscalls," not "needs everything." Reading each error (`cannot clone`,
+`join keyctl`, `pivot_root`) pointed straight at the fix, rather than
+reaching for `--privileged` — or its seccomp-only equivalent,
+`seccomp=unconfined` — and never finding out what was actually being
+blocked. `seccomp=unconfined` is worth calling out specifically: unlike
+`--cap-add`, which only ever grants what you name, it doesn't add an
+exception — it removes the entire filter, which is exactly as permissive
+as `--privileged` on that one axis even though capabilities and devices
+stay locked down. A profile with two syscalls added back keeps the
+"narrower than privileged" claim true in every dimension, not just two out
+of three.
