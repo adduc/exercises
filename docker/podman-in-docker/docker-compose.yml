@@ -1,0 +1,11 @@
+---
+services:
+
+  podman:
+    image: quay.io/podman/stable:latest
+    devices: [/dev/fuse]
+    cap_add: [SYS_ADMIN]
+    security_opt: [seccomp=unconfined]
+    tty: true
+    stdin_open: true
+    command: sleep infinity
