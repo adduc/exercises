@@ -1,3 +1,4 @@
+---
 services:
   ansible:
     build: .
@@ -14,6 +15,7 @@ configs:
       ansible-lint
       ansible-galaxy install -r requirements.yml
       ansible-playbook playbooks/import-ubuntu-ova-to-template.yml --diff
-      ansible-playbook playbooks/import-ubuntu-ova-to-template.yml --diff --check
+      ansible-playbook playbooks/import-ubuntu-ova-to-template.yml --diff \
+        --check
       ansible-playbook playbooks/create-vm-from-template.yml --diff
       ansible-playbook playbooks/create-vm-from-template.yml --diff --check

@@ -82,7 +82,8 @@
             controller_number: 0
             unit_number: 0
             type: iso
-            iso_path: "[{{ vcenter_datastore }}] {{ vm_example_cidata_iso_datastore_path }}"
+            iso_path: "[{{ vcenter_datastore }}] \
+              {{ vm_example_cidata_iso_datastore_path }}"
             state: present
         state: poweredon
 
