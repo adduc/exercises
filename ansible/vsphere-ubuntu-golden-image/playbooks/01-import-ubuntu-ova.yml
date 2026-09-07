@@ -34,7 +34,8 @@
         - name: Assert checksum was found
           ansible.builtin.assert:
             that: current_checksum | length == 64
-            fail_msg: "Could not extract checksum for {{ ova_filename }} from {{ checksums_filename }}"
+            fail_msg: "Could not extract checksum for {{ ova_filename }} \
+              from {{ checksums_filename }}"
 
     - name: Check existing checksum of template (if exists)
       block:
@@ -72,8 +73,13 @@
 
     - name: Set facts
       ansible.builtin.set_fact:
-        checksum_mismatch: "{{ (existing_vm_result.instance is not defined or existing_vm_result.instance.customvalues[checksums_attribute]|default('') != current_checksum) | bool }}"
-        is_template: "{{ (existing_vm_result.instance is defined and existing_vm_result.instance.hw_is_template) | bool }}"
+        checksum_mismatch: >-
+          {{ (existing_vm_result.instance is not defined or
+          existing_vm_result.instance.customvalues[checksums_attribute]
+          | default('') != current_checksum) | bool }}
+        is_template: >-
+          {{ (existing_vm_result.instance is defined and
+          existing_vm_result.instance.hw_is_template) | bool }}
 
     - name: Download Ubuntu 24.04 OVA
       when: checksum_mismatch

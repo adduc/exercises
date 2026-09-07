@@ -1,3 +1,4 @@
+---
 all:
   hosts:
     localhost:
@@ -32,23 +33,28 @@ all:
       os_image_base_url: "https://dl-cdn.alpinelinux.org/alpine/"
       os_image_release: "3.23"
       os_image_version: "3.23.4"
-      os_image_filename: "nocloud_alpine-{{ os_image_version }}-x86_64-uefi-cloudinit-r0.qcow2"
+      os_image_filename: "nocloud_alpine-{{ os_image_version }}-x86_64-\
+        uefi-cloudinit-r0.qcow2"
 
-      os_image_src: "{{ '%s/v%s/releases/cloud/%s' % (os_image_base_url, os_image_release, os_image_filename) }}"
+      os_image_src: "{{ '%s/v%s/releases/cloud/%s' % (os_image_base_url, \
+        os_image_release, os_image_filename) }}"
 
       os_image_dest: "{{ path_local }}/{{ os_image_filename }}"
       os_image_download_timeout: 1200
       os_image_disk_size: "2G"
 
-      os_vmdk_filename: "nocloud_alpine-{{ os_image_version }}-x86_64-uefi-cloudinit-r0.vmdk"
+      os_vmdk_filename: "nocloud_alpine-{{ os_image_version }}-x86_64-\
+        uefi-cloudinit-r0.vmdk"
       os_vmdk_dest: "{{ path_tmp }}/{{ os_vmdk_filename }}"
 
-      os_ovf_filename: "nocloud_alpine-{{ os_image_version }}-x86_64-uefi-cloudinit-r0.ovf"
+      os_ovf_filename: "nocloud_alpine-{{ os_image_version }}-x86_64-\
+        uefi-cloudinit-r0.ovf"
       os_ovf_dest: "{{ path_tmp }}/{{ os_ovf_filename }}"
 
       # Where the Alpine Cloud image template VM should be placed
       templates_folder: "Templates"
-      templates_folder_path: "{{ vcenter_datacenter }}/vm/{{ templates_folder }}"
+      templates_folder_path: "{{ vcenter_datacenter }}/vm/\
+        {{ templates_folder }}"
 
       # vSphere portgroup to attach the template NIC to during import
       vcenter_network: "VM Network"
@@ -61,8 +67,10 @@ all:
       template_golden_cidata_iso_name: "cidata.iso"
       template_golden_metadata_local: "{{ path_tmp }}/meta-data"
       template_golden_userdata_local: "{{ path_tmp }}/user-data"
-      template_golden_cidata_iso_local: "{{ path_tmp }}/{{ template_golden_cidata_iso_name }}"
-      template_golden_cidata_iso_datastore_path: "{{ templates_folder }}/{{ template_golden_name }}/{{ template_golden_cidata_iso_name }}"
+      template_golden_cidata_iso_local: "{{ path_tmp }}/\
+        {{ template_golden_cidata_iso_name }}"
+      template_golden_cidata_iso_datastore_path: "{{ templates_folder }}/\
+        {{ template_golden_name }}/{{ template_golden_cidata_iso_name }}"
       template_golden_userdata: |
         #cloud-config
         hostname: {{ template_golden_name }}
@@ -96,7 +104,10 @@ all:
 
         runcmd:
           # Required or users without passwords won't be able to log in via SSH
-          - grep -q '^UsePAM' /etc/ssh/sshd_config && sed -i 's/^UsePAM.*/UsePAM yes/' /etc/ssh/sshd_config || echo 'UsePAM yes' >> /etc/ssh/sshd_config
+          - >-
+            grep -q '^UsePAM' /etc/ssh/sshd_config && sed -i
+            's/^UsePAM.*/UsePAM yes/' /etc/ssh/sshd_config ||
+            echo 'UsePAM yes' >> /etc/ssh/sshd_config
           - rc-update add open-vm-tools boot
           - rc-service open-vm-tools start
           - cloud-init clean --logs --machine-id --configs all --seed
@@ -114,8 +125,10 @@ all:
       vm_example_cidata_iso_name: "cidata.iso"
       vm_example_metadata_local: "{{ path_tmp }}/meta-data"
       vm_example_userdata_local: "{{ path_tmp }}/user-data"
-      vm_example_cidata_iso_local: "{{ path_tmp }}/{{ vm_example_cidata_iso_name }}"
-      vm_example_cidata_iso_datastore_path: "{{ examples_folder }}/{{ vm_example_name }}/{{ vm_example_cidata_iso_name }}"
+      vm_example_cidata_iso_local: "{{ path_tmp }}/\
+        {{ vm_example_cidata_iso_name }}"
+      vm_example_cidata_iso_datastore_path: "{{ examples_folder }}/\
+        {{ vm_example_name }}/{{ vm_example_cidata_iso_name }}"
       vm_example_userdata: |
         #cloud-config
         hostname: {{ vm_example_name }}

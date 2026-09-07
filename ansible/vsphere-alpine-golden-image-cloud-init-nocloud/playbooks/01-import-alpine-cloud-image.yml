@@ -1,4 +1,6 @@
-# - Milestone 1: Pull alpine cloud image (qcow2, cloud-init), import into vSphere
+---
+# - Milestone 1: Pull alpine cloud image (qcow2, cloud-init), import
+#   into vSphere
 
 - name: Importing Alpine Linux cloud image (cloud-init) into vSphere
   hosts: localhost
@@ -29,7 +31,8 @@
 
     - name: Convert qcow2 to streamOptimized vmdk
       ansible.builtin.command:
-        cmd: "qemu-img convert -f qcow2 -O vmdk -o subformat=streamOptimized {{ os_image_dest }} {{ os_vmdk_dest }}"
+        cmd: "qemu-img convert -f qcow2 -O vmdk -o subformat=streamOptimized \
+          {{ os_image_dest }} {{ os_vmdk_dest }}"
       register: convert_result
       changed_when: convert_result.rc == 0
       failed_when: convert_result.rc != 0
@@ -42,7 +45,8 @@
 
     - name: Set disk capacity fact
       ansible.builtin.set_fact:
-        os_disk_capacity_bytes: "{{ (qemu_info.stdout | from_json)['virtual-size'] }}"
+        os_disk_capacity_bytes: "{{ (qemu_info.stdout | \
+          from_json)['virtual-size'] }}"
 
     - name: Lookup template VM (if present)
       community.vmware.vmware_guest_info:
@@ -98,7 +102,8 @@
             <VirtualSystem ovf:id="{{ template_os_name }}">
               <Info>Alpine Linux cloud image</Info>
               <Name>{{ template_os_name }}</Name>
-              <OperatingSystemSection ovf:id="101" vmw:osType="other5xLinux64Guest">
+              <OperatingSystemSection ovf:id="101"
+                                       vmw:osType="other5xLinux64Guest">
                 <Info>Guest OS</Info>
                 <Description>Other Linux (64-bit)</Description>
               </OperatingSystemSection>
@@ -107,7 +112,8 @@
                 <System>
                   <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
                   <vssd:InstanceID>0</vssd:InstanceID>
-                  <vssd:VirtualSystemIdentifier>{{ template_os_name }}</vssd:VirtualSystemIdentifier>
+                  <vssd:VirtualSystemIdentifier
+                    >{{ template_os_name }}</vssd:VirtualSystemIdentifier>
                   <vssd:VirtualSystemType>vmx-19</vssd:VirtualSystemType>
                 </System>
                 <Item>
@@ -151,8 +157,10 @@
                   <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
                   <rasd:ResourceType>10</rasd:ResourceType>
                 </Item>
-                <vmw:Config ovf:required="false" vmw:key="firmware" vmw:value="efi"/>
-                <vmw:Config ovf:required="false" vmw:key="usb.present" vmw:value="false"/>
+                <vmw:Config ovf:required="false" vmw:key="firmware"
+                            vmw:value="efi"/>
+                <vmw:Config ovf:required="false" vmw:key="usb.present"
+                            vmw:value="false"/>
               </VirtualHardwareSection>
             </VirtualSystem>
           </Envelope>

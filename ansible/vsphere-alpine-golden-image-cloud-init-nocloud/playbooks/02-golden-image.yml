@@ -84,7 +84,8 @@
             controller_number: 0
             unit_number: 0
             type: iso
-            iso_path: "[{{ vcenter_datastore }}] {{ template_golden_cidata_iso_datastore_path }}"
+            iso_path: "[{{ vcenter_datastore }}] \
+              {{ template_golden_cidata_iso_datastore_path }}"
             state: present
 
     - name: Power on VM
