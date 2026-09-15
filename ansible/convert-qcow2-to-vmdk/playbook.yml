@@ -1,0 +1,36 @@
+---
+##
+# Ansible Playbook: downloads Alpine Linux cloud image and converts it
+# from qcow2 to vmdk format.
+#
+# This is useful for importing into VMware environments.
+#
+# Requires qemu-img to perform the image conversion
+##
+
+- hosts: localhost
+  gather_facts: false
+
+  vars:
+    qcow2_file_path: "nocloud_alpine-3.22.1-x86_64-bios-tiny-r0.qcow2"
+    vmdk_file_path: "nocloud_alpine-3.22.1-x86_64-bios-tiny-r0.vmdk"
+    image_url: "https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/cloud/{{ qcow2_file_path }}"
+
+  tasks:
+    - name: Check if vmdk file exists
+      register: vmdk_file
+      ansible.builtin.stat:
+        path: "{{ vmdk_file_path }}"
+
+    - name: Download and convert
+      when: not vmdk_file.stat.exists
+      block:
+        - name: Download alpine qcow2 image
+          ansible.builtin.get_url:
+            # @see https://alpinelinux.org/cloud/
+            url: "{{ image_url }}"
+            dest: "{{ ansible_playbook_dir}}/{{ qcow2_file_path }}"
+
+        - name: Convert qcow2 to vmdk
+          ansible.builtin.command:
+            cmd: qemu-img convert -f qcow2 -o subformat=streamOptimized -O vmdk "{{ ansible_playbook_dir }}/{{ qcow2_file_path }}" "{{ playbook_dir }}/{{ vmdk_file_path }}"
